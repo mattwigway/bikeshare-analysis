@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # Add X and Y coordinates to a Capital Bikeshare trip history file
 # Copyright (C) 2013 Matthew Wigginton Conway. All rights reserved.
 
@@ -48,10 +49,10 @@ count = 0
 try:
     for row in inCsv:
         try:
-            row['start_x'] = stations[row['Start terminal']]['x']
-            row['start_y'] = stations[row['Start terminal']]['y']
-            row['end_x'] = stations[row['End terminal']]['x']
-            row['end_y'] = stations[row['Start terminal']]['x']
+            row['start_x'] = stations[row['start_terminal']]['x']
+            row['start_y'] = stations[row['start_terminal']]['y']
+            row['end_x'] = stations[row['end_terminal']]['x']
+            row['end_y'] = stations[row['end_terminal']]['y']
 
         except KeyError:
             unmatched += 1
