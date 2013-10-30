@@ -5,6 +5,11 @@
 import csv
 from xml.dom.minidom import parse
 from sys import argv
+from pyproj import Proj, transform
+
+sourceProj = Proj(init='epsg:4326')
+# WGS 84 UTM Zone 18N meters
+destProj = Proj(init='epsg:32618')
 
 # process arguments
 
@@ -28,9 +33,11 @@ for station in stationFile.getElementsByTagName('station'):
     lat = float(getTagContents(station, 'lat'))
     lon = float(getTagContents(station, 'long'))
 
+    x, y = transform(sourceProj, destProj, lon, lat)
+
     stations[stId] = dict(
-        x=lon,
-        y=lat
+        x=int(round(x)),
+        y=int(round(y))
         )
 
 # read CSV

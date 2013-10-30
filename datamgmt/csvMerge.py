@@ -9,7 +9,7 @@ import re
 # get the last argument
 outfileName = argv[-1]
 
-fieldnames = ['duration', 'duration_sec', 'start_date', 'start_station', 'start_terminal', 'end_date', 'end_station', 'end_terminal', 'bike_num', 'subscription_type', 'start_time', 'bike_key']
+fieldnames = ['duration', 'duration_sec', 'start_date', 'start_station', 'start_terminal', 'end_date', 'end_station', 'end_terminal', 'bike_num', 'subscription_type', 'bike_key']
 out = csv.DictWriter(open(outfileName, 'w'), fieldnames)
 out.writeheader()
 
@@ -48,7 +48,7 @@ for infile in argv[1:-1]:
         renameKey(row, 'End Terminal', 'end_terminal')
         renameKey(row, 'Bike#', 'bike_num')
         renameKey(row, 'Subscription Type', 'subscription_type')
-        renameKey(row, 'Start time', 'start_time') # Note: also implicit in start date, as it is stored in epoch seconds
+        renameKey(row, 'Start time', 'start_date')
         renameKey(row, 'Bike Key', 'bike_key')
 
         # Sometimes they don't explicitly record the terminals
