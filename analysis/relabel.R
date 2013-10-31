@@ -2,7 +2,7 @@
 # Copyright (C) 2013 Matthew Wigginton Conway. All rights reserved.
 
 # Number of simulations for the relabel
-NSIMS = 100
+NSIMS = 99
 
 source('analysis/periods.R')
 
@@ -18,16 +18,37 @@ randomizeOrder <- function(vector) {
   return(vector[order(orderBy)])
 }
 
-# This computes the chi-squared test statistic for two matrices
-chi.gof <- function (observed, expected) {
+# This computes the test statistic for two matrices
+calcTs <- function (observed, expected) { 
+  return(sum((observed - expected)^2)/sum(expected)^2)
+}
+
+# This computes pairwise test statistics for each time period relative to every other
+computePairwiseStats <- function (tripMatrix) {
+  # Build a matrix for the test statistics
+  pairwiseStats <- matrix(NA, nrow=period.count, ncol=period.count)
   
+  # compare each one to all others
+  for (i in period.all) {
+    for (j in period.all) {
+      obs <- tripMatrix[i,,]
+      ex  <- tripMatrix[j,,]
+      
+      # scale so sums are same
+      pairwiseStats[i,j] <- calcTs(obs, ex * (sum(ex)/sum(obs)))
+    }
+  }
+  
+  return(pairwiseStats)
 }
 
 data <- read.csv('data/data-cleaned-labeled.csv')
 orig <- buildTripMatrix(data)
 
-# Make a matrix to store the results
-gof <- matrix(NA, 100, 7)
+origTS <- computePairwiseStats(orig)
+
+# Make an array to store the test statistics in
+simulatedTS <- array(NA, dim=c(NSIMS, period.count, period.count))
 
 for (i in 1:NSIMS) {
   cat('Repetition', i, '\n')
@@ -37,12 +58,18 @@ for (i in 1:NSIMS) {
   
   tripMatrix <- buildTripMatrix(data)
   
-  # Compute the GOF statistic (chi-squared) for each time period
-  # H_0: the original distribution fits a random distribution
-  # TODO: should we test the other way (i.e. make the actual values the expected values?)
-  for (period in period.all) {
-    chisq = 
-  }
-  
+  # Compute the pairwise stats and store them
+  simulatedTS[i,,] <- computePairwiseStats(tripMatrix)
 }
+
+# Find the p-values
+pvals <- matrix(NA, nrow=period.count, ncol=period.count)
+for (i in period.all) {
+  for (j in period.all) {
+     pvals[i,j] <- sum(simulatedTS[,i,j] >= origTS[i,j]) / (NSIMS + 1)
+  }
+}
+
+# make a barplot of the label frequencies
+barplot(xtabs(~label, data))
 
