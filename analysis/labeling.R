@@ -14,7 +14,7 @@ source('analysis/periods.R')
 
 data <- load_data(sample=F)
 
-labelDate <- function(rawDate) {
+label <- function(rawDate) {
   date <- strptime(rawDate, format='%m/%d/%Y %H:%M', tz=TIMEZONE)
 
   # first check the time
@@ -49,20 +49,21 @@ labelDate <- function(rawDate) {
 # It would seem simple to just use vapply, but that crashes R. So we chunk it into groups of
 # 10000
 # data$label <- apply(data, )
+dataLen <- length(data$start_date)
+# Writing directly into a data frame is really slow
+data_label <- rep(NA, dataLen)
 
-data$label <- rep(9999, length(data$start_date))
-CHUNKSIZE <- 5000
-#chunks <- 
-for (start in seq(1, length(data$start_date), CHUNKSIZE)) {
-  cat(start, ' . . . ')
-  # determine end
-  end <- start + CHUNKSIZE - 1
-  if (end > length(data$start_date)) end <- length(data$start_date)
+# don't store a huge vector that is really just an index
+i <- 1
+while (i <= dataLen) {
+  if (i %% 100000 == 0)
+    cat(i, ' . . . ')
+  data_label[i] <- label(data$start_date[i])
   
-  range <- start:end
-  
-  data$label[range] <- vapply(data$start_date[range], labelDate, 0)
+  i <- i + 1
 }
+
+data$label <- data_label
 
 # store labeled data
 write.csv(data, file="data/data-cleaned-labeled.csv")
