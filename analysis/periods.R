@@ -8,12 +8,13 @@
 # Forecasting Model, Version 2.3, Build 52: Draft Report. Washington, 2013.
 # http://www.mwcog.org/transportation/activities/models/files/V2.3.52_Users_Guide_v2_w_appA.pdf.
 
-period.all <- 1:7
-period.wkmorn <- 0
-period.wkmid <-1
-period.wkeve <- 2
-period.wknight <- 3
-period.wemorn <- 4
-period.wemid <- 5
-period.weeve <- 6
-period.wenight <- 7
+period.all <- 1:8
+period.wkmorn <- 1
+period.wkmid <-2
+period.wkeve <- 3
+period.wknight <- 4
+period.wemorn <- 5
+period.wemid <- 6
+period.weeve <- 7
+period.wenight <- 8
+period.count <- 8
