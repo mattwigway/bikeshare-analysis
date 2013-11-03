@@ -6,6 +6,7 @@ TIMEZONE <- 'America/New_York'
 data <- read.csv('data/data-cleaned-labeled-.005.csv')
 library(plyr)
 library(spatstat)
+library(spdep)
 
 # First, calculate station popularities
 first <- function (vect) { return(vect[1]) }
@@ -59,9 +60,33 @@ popularityDest <- ddply(data, c('end_terminal'), summarise,
                         pop=length(end_x) * 200 / ((maxDate(start_date) - minDate(start_date)) / 86400)
 )
 
-# Compute the weights
-weights <- 1/pairdist(popularityDest$x, popularityDest$y)^2
-diag(weights) <- 0 # no interaction for identity
-weights <- weights/max(weights) # scale
+popularityOrig <- ddply(data, c('start_terminal'), summarise,
+                        x=first(start_x),
+                        y=first(start_y),
+                        # note: *200 is counter effects of random sample
+                        # remove when using population
+                        N=length(end_x),
+                        span=maxDate(start_date) - minDate(start_date),
+                        pop=length(end_x) * 200 / ((maxDate(start_date) - minDate(start_date) + 1) / 86400)
+)
 
-# Compute Moran's I
+popularity <- popularityDest # Note: include orig
+attach(popularity)
+
+dists <- pairdist(popularity$x, popularity$y)
+sds <- seq(0, 20000, 25)
+ivals <- rep(NA, length(sd))
+for (j in 1:length(sds)) {
+  sd <- sds[j]
+  # weights
+  weights <- pnorm(dists, sd=sd, lower.tail=F)
+  diag(weights) <- 0
+  wlw <- mat2listw(weights)
+  # compute Moran's i
+  ivals[j] <- moran(pop, wlw, length(pop), Szero(wlw))$I
+}
+
+# Plot Moran's I
+plot(sds, ivals, type='l',
+     main="Moran's I, Gaussian distance weights",
+     xlab="Gaussian standard deviation", ylab="I value")
