@@ -2,7 +2,7 @@
 # Copyright (C) 2013 Matthew Wigginton Conway. All rights reserved.
 
 # Number of simulations for the relabel
-NSIMS = 99
+NSIMS = 999
 
 source('analysis/periods.R')
 
@@ -69,6 +69,8 @@ for (i in period.all) {
      pvals[i,j] <- sum(simulatedTS[,i,j] >= origTS[i,j]) / (NSIMS + 1)
   }
 }
+
+write.csv(pvals, 'writeup/pvals.csv')
 
 # make a barplot of the label frequencies
 barplot(xtabs(~label, data))
