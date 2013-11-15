@@ -2,7 +2,8 @@
 # Copyright (C) 2013 Matthew Wigginton Conway. All rights reserved.
 
 TIMEZONE <- 'America/New_York'
-
+# StarLab
+setwd('E:/GEOG172/bikeshare-analysis')
 data <- read.csv('data/data-cleaned-labeled-.005.csv')
 library(plyr)
 library(spatstat)
@@ -51,27 +52,54 @@ maxDate <- function (rawDates) {
 
 # pop can be interpreted as trips per day, iff you're using population data
 popularityDest <- ddply(data, c('end_terminal'), summarise,
-                        x=first(end_x),
-                        y=first(end_y),
-                        # note: *200 is counter effects of random sample
-                        # remove when using population
-                        N=length(end_x),
-                        span=maxDate(start_date) - minDate(start_date),
-                        pop=length(end_x) * 200 / ((maxDate(start_date) - minDate(start_date)) / 86400)
+				# No need to have x's and y's here, they come from orig
+                        NDest=length(end_x),
+                        firstDest=minDate(start_date),
+				lastDest=maxDate(start_date)
 )
 
 popularityOrig <- ddply(data, c('start_terminal'), summarise,
                         x=first(start_x),
                         y=first(start_y),
-                        # note: *200 is counter effects of random sample
+                        # note: *200 is to counter effects of random sample
                         # remove when using population
-                        N=length(end_x),
-                        span=maxDate(start_date) - minDate(start_date),
-                        pop=length(end_x) * 200 / ((maxDate(start_date) - minDate(start_date) + 1) / 86400)
+                        NOrig=length(start_x),
+                        firstOrig=minDate(start_date),
+				lastOrig=maxDate(start_date)
 )
 
-popularity <- popularityDest # Note: include orig
+# Full outer join
+popularity <- merge(popularityOrig, popularityDest, all=T, by.x='start_terminal', by.y='end_terminal')
+popularity$NOrig[is.na(popularity$NOrig)] <- NA
+popularity$NDest[is.na(popularity$NDest)] <- NA
+
+origCt <- dim(popularity)[1]
+# Drop ones with no coords, shouldn't happen
+popularity <- subset(popularity, !is.na(x))
+
+cat('Removed', origCt - dim(popularity)[1], 'stations with no coordinates\n')
+
 attach(popularity)
+
+# Sum up the number of bike movements and divide by the number of days the station is open
+# First, calculate span
+lastOpDate <- apply(matrix(c(lastOrig, lastDest), ncol=2), 1, max, na.rm=T)
+firstOpDate <- apply(matrix(c(lastOrig, lastDest), ncol=2), 1, min, na.rm=T)
+spans <- (((lastOpDate - firstOpDate) / 86400) + 1)
+popularity$pop <- (NOrig + NDest) / spans
+
+# We take the log of popularity to normalize the distribution
+popularity$lpop <- log(popularity$pop)
+
+detach(popularity)
+attach(popularity)
+
+# Make a plot for the writeup showing why we took a log
+layout(matrix(1:2, 1, 2))
+hist(pop, main=NA, xlab='Bike movements/day', ylab='Number of stations')
+hist(lpop, main=NA, xlab='log(Bike movements/day)', ylab='Number of stations')
+
+# TODO: neighbor matrix
 
 dists <- pairdist(popularity$x, popularity$y)
 sds <- seq(0, 20000, 25)
