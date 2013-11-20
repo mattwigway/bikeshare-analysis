@@ -2,12 +2,16 @@
 # Copyright (C) 2013 Matthew Wigginton Conway. All rights reserved.
 
 TIMEZONE <- 'America/New_York'
+BREAK_LINKS_OVER <- 4000 # 4000 m, empirically determined; much less than 4000m and we start seeing more than
+                         # two clusters, and we really do want to keep it clustered to just DC/Arlington/Alexandria
+                         # and Montgomery County.
 # StarLab
-setwd('E:/GEOG172/bikeshare-analysis')
+#setwd('E:/GEOG172/bikeshare-analysis')
 data <- read.csv('data/data-cleaned-labeled-.005.csv')
 library(plyr)
 library(spatstat)
 library(spdep)
+library(AID)
 
 # First, calculate station popularities
 first <- function (vect) { return(vect[1]) }
@@ -68,17 +72,8 @@ popularityOrig <- ddply(data, c('start_terminal'), summarise,
 				lastOrig=maxDate(start_date)
 )
 
-# Full outer join
-popularity <- merge(popularityOrig, popularityDest, all=T, by.x='start_terminal', by.y='end_terminal')
-popularity$NOrig[is.na(popularity$NOrig)] <- NA
-popularity$NDest[is.na(popularity$NDest)] <- NA
-
-origCt <- dim(popularity)[1]
-# Drop ones with no coords, shouldn't happen
-popularity <- subset(popularity, !is.na(x))
-
-cat('Removed', origCt - dim(popularity)[1], 'stations with no coordinates\n')
-
+# Full inner join; remove any station that doesn't have both trip origins and trip terminations
+popularity <- merge(popularityOrig, popularityDest, all=F, by.x='start_terminal', by.y='end_terminal')
 attach(popularity)
 
 # Sum up the number of bike movements and divide by the number of days the station is open
@@ -88,33 +83,52 @@ firstOpDate <- apply(matrix(c(lastOrig, lastDest), ncol=2), 1, min, na.rm=T)
 spans <- (((lastOpDate - firstOpDate) / 86400) + 1)
 popularity$pop <- (NOrig + NDest) / spans
 
-# We take the log of popularity to normalize the distribution
-popularity$lpop <- log(popularity$pop)
+# Normalize the popularity as much as possible
+# We use the Shapiro-Wilk method because it gave a number close to the average
+# when used on sample data. Need to check with Dr. Sweeney regarding the best
+# way to choose a method.
+bctransform <- function (data, lambda) {
+  if (lambda == 0) {
+    return(log(data))
+  }
+  else {
+    return((data^lambda - 1)/lambda)
+  }
+}
+bclam <- boxcoxnc(popularity$pop, method='sw')
+popularity$bcpop <- bctransform(popularity$pop, bclam$result[1])
+cat('Box-Cox p-values:', bclam$result[2:4,])
 
 detach(popularity)
 attach(popularity)
 
-# Make a plot for the writeup showing why we took a log
+# Make a plot for the writeup showing why we used Box-Cox
 layout(matrix(1:2, 1, 2))
 hist(pop, main=NA, xlab='Bike movements/day', ylab='Number of stations')
-hist(lpop, main=NA, xlab='log(Bike movements/day)', ylab='Number of stations')
+hist(bcpop, main=NA, xlab=paste('Box-Cox transformed bike movements/day (λ=', bclam$result[1], ')', sep=''), ylab='Number of stations')
+graphics.off()
 
-# TODO: neighbor matrix
+# build the neighbor matrix
+nbmat <- tri2nb(popularity[,c('x','y')], row.names=start_terminal)
 
-dists <- pairdist(popularity$x, popularity$y)
-sds <- seq(0, 20000, 25)
-ivals <- rep(NA, length(sd))
-for (j in 1:length(sds)) {
-  sd <- sds[j]
-  # weights
-  weights <- pnorm(dists, sd=sd, lower.tail=F)
-  diag(weights) <- 0
-  wlw <- mat2listw(weights)
-  # compute Moran's i
-  ivals[j] <- moran(pop, wlw, length(pop), Szero(wlw))$I
+# Drop really long links
+for (i in 1:length(nbmat)) {
+  newNb <- c()
+  for (j in nbmat[[i]]) {
+    dist <- sqrt((x[i] - x[j])^2 + (y[i] - y[j])^2)
+    if (dist <= BREAK_LINKS_OVER) {
+      newNb <- c(newNb, as.integer(j))
+    }
+  }
+  nbmat[[i]] <- newNb
 }
 
-# Plot Moran's I
-plot(sds, ivals, type='l',
-     main="Moran's I, Gaussian distance weights",
-     xlab="Gaussian standard deviation", ylab="I value")
+weights <- nb2listw(nbmat, style='W')
+
+# Plot the triangulation
+plot(weights, coords=popularity[,c('x','y')], main="Station adjacency")
+graphics.off()
+
+# Calulate moran's I
+moran.test(bcpop, weights)
+moran.plot(bcpop, weights)
