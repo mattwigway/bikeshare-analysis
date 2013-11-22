@@ -1,0 +1,136 @@
+\documentclass[letterpaper,11pt]{article}
+\usepackage[american]{babel}
+
+\usepackage[hidelinks]{hyperref}
+
+% I like international letters
+\usepackage[utf8]{inputenc}
+
+\usepackage{csquotes}
+\usepackage[authordate,strict,sorting=nyt,babel=other,cmsdate=both]{biblatex-chicago}
+\usepackage{mathtools}
+\bibliography{UCSB-GEOG172}
+
+% [s]pecialization
+%\hyphenation{pe-cial-iza-tion}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{\emph{Matthew Wigginton Conway}}
+\chead{\emph{Draft}}
+\rhead{\emph{\today}}
+
+\title{Analyzing the Effects of Space and Time on Bikeshare Use: A Case Study in Washington, DC}
+\author{Matthew Wigginton Conway}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+Bikesharing is a relatively new form of shared transportation wherein
+bikes are deposited at stations throughout a city. Users pay an annual
+fee and they can then take bikes from any station and return them to
+any station. These systems generate a wealth of data. The stations are
+electronic, so each time a trip is taken, a record is stored in a
+database with the origin, destination, start and end times of that
+trip. For some systems, this data is freely available online. This
+project aims to use data on the approximately 4.5 million trips taken
+on Washington, DC's Capital Bikeshare system from 2010 through the
+present to examine how time of day and station location affect the
+usage of the bikeshare system.
+
+The data are avai
+
+\section{Time of Day Effects}
+
+One of the chief difficulties of any bikeshare system is keeping
+bicycles balanced across the system. The problem is doubly
+constrained, because the system operator not only needs to keep enough
+bikes available at all stations, but also needs to prevent stations
+from becoming completely full and thus preventing people from parking
+their bikes. This is usually accomplished via a fleet of trucks which
+pick up bikes from overfull stations and rebalance them to empty or
+nearly empty stations.
+
+For the time of day portion of this project, the data on bike share
+trips was used to determine whether the distribution of start and end
+stations differs significantly between time periods. Eight time
+periods were defined: morning (6a--9a), midday (9a--3p), afternoon
+(3p--7p) and overnight (7p--9p) for both weekdays and weekends. The
+boundaries of the time periods are the same as those used in the
+Metropolitan Washington Council of Governments travel model, although
+MWCOG does not further divide the time periods into weekday and
+weekend patterns \autocite[14]{MWCOG2013}.
+
+\subsection{Methodology}
+
+Each trip in the data was first assigned a time period based on its
+start time.\footnote{See labeling.R.}\marginpar{explain where the
+  scripts are} For each time period, an origin-destination matrix was
+created, showing the number of trips between each station pair. The
+matrices were then compared pairwise, comparing each time period to
+every other time period. The following test statistic was computed for
+each pairwise comparison.
+
+\begin{equation}\label{eq:timets}
+ \displaystyle\sum_i \sum_j (t_{ij,1} - t_{ij,2})^2 \over
+ (\displaystyle \sum_i \sum_j t_{ij,2})^2
+\end{equation}
+
+Where $i$ and $j$ represent origin and destination stations,
+respectively, $t_{ij,1}$ is trips from origin $i$ to destination $j$
+in time period 1, and $t_{ij,2}$ is trips from origin $i$ to
+destination $j$ in time period 2. The denominator of the equation is
+to scale the test statistic based on the total number of trips taken
+in the time period, so that the magnitude of the test statistic is not
+affected by the absolute number of trips taken in the time
+period. Additionally, matrix 2 is scaled before calculation such
+that the total number of trips in each matrix are the same. That is,
+
+\begin{equation}\label{eq:timeconstraint}
+  \displaystyle \sum_i \sum_j t_{ij,1} = \sum_i \sum_j t_{ij,2}
+\end{equation}
+
+Once test statistics were computed for each pair of time periods, a
+Monte Carlo simulation was undertaken to determine whether the time
+periods differ significantly. The trips were originally used to
+generate the origin-destination randomly reassigned to different time
+periods. The number of trips in each time period was held
+constant. Since this worked by relabeling the existing trips, the
+distribution of trips to origins and destinations was constant over
+all time periods though it varied within time
+periods. Origin-destination matrices were then calculated using the
+relabeled trips, and the same pairwise comparison was done and test
+statistics computed. This process was repeated 999 times.
+
+\subsection{Results}
+
+It was found that there is an effect of time of day on the
+origin-destination matrices. For every pair, there was no test
+statistic from the Monte Carlo simulation higher than the test statistic
+from the observed pair. The p-values between time periods are show below.
+
+\noindent \input{pval_table}
+
+The p-value represents the probability that the observed differences
+between two time periods could have occurred by chance. As we can see,
+there is a statistically significant difference between every time
+period and every other time period ($p < 0.05$).
+
+\subsection{Discussion}
+
+Such a result should not be surprising. To take a trivial example,
+commuters may ride from a residential area to a Metro stop each
+morning, and the reverse each evening. Weekend trips may represent
+people using the system for pleasure or entertainment rather than
+commuting. 
+
+
+
+
+\newpage
+\printbibliography
+
+\emph{Copyright © 2013 Matthew Wigginton Conway. All rights reserved}
+
+\end{document}
