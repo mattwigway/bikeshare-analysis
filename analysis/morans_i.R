@@ -118,7 +118,7 @@ hist(pop, main=NA, xlab='Bike movements/day', ylab='Number of stations')
 hist(bcpop, main=NA, xlab=paste('Box-Cox transformed bike movements/day (λ=', bclam$result[1], ')', sep=''), ylab='Number of stations')
 
 # build the neighbor matrix
-nbmat <- tri2nb(popularity[,c('x','y')], row.names=start_terminal)
+nbmat <- tri2nb(popularity[,c('x','y')], row.names=terminal)
 
 # Drop really long links
 for (i in 1:length(nbmat)) {
@@ -136,8 +136,12 @@ weights <- nb2listw(nbmat, style='W')
 
 # Plot the triangulation
 plot(weights, coords=popularity[,c('x','y')], main="Station adjacency")
+
+# labels
+text(locator(), labels=c('Washington', 'Arlington', 'Alexandria'))
+
 graphics.off()
 
 # Calulate moran's I
 moran.test(bcpop, weights)
-moran.plot(bcpop, weights)
+moran.plot(bcpop, weights, xlab='Box-Cox transformed bike movements/day', ylab='Spatially lagged transformed bike movements/day')
