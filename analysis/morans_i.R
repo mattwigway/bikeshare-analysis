@@ -5,13 +5,15 @@ TIMEZONE <- 'America/New_York'
 BREAK_LINKS_OVER <- 4000 # 4000 m, empirically determined; much less than 4000m and we start seeing more than
                          # two clusters, and we really do want to keep it clustered to just DC/Arlington/Alexandria
                          # and Montgomery County.
+EXCLUDE_STATIONS <- c('32004', '32009', '32005', '32007') # Exclude the four stations in Montgomery County
 # StarLab
 #setwd('E:/GEOG172/bikeshare-analysis')
-data <- read.csv('data/data-cleaned-labeled-.005.csv')
 library(plyr)
 library(spatstat)
 library(spdep)
 library(AID)
+
+data <- read.csv('data/data-cleaned-labeled.csv')
 
 # First, calculate station popularities
 first <- function (vect) { return(vect[1]) }
@@ -74,6 +76,11 @@ popularityOrig <- ddply(data, c('start_terminal'), summarise,
 
 # Full inner join; remove any station that doesn't have both trip origins and trip terminations
 popularity <- merge(popularityOrig, popularityDest, all=F, by.x='start_terminal', by.y='end_terminal')
+popularity <- rename(popularity, c("start_terminal"="terminal"))
+
+# Remove stations
+popularity <- subset(popularity, !(terminal %in% EXCLUDE_STATIONS))
+
 attach(popularity)
 
 # Sum up the number of bike movements and divide by the number of days the station is open
@@ -102,11 +109,13 @@ cat('Box-Cox p-values:', bclam$result[2:4,])
 detach(popularity)
 attach(popularity)
 
+# save the popularities to avoid recalculation later
+write.csv(popularity, 'data/station-popularities.csv')
+
 # Make a plot for the writeup showing why we used Box-Cox
 layout(matrix(1:2, 1, 2))
 hist(pop, main=NA, xlab='Bike movements/day', ylab='Number of stations')
 hist(bcpop, main=NA, xlab=paste('Box-Cox transformed bike movements/day (λ=', bclam$result[1], ')', sep=''), ylab='Number of stations')
-graphics.off()
 
 # build the neighbor matrix
 nbmat <- tri2nb(popularity[,c('x','y')], row.names=start_terminal)
