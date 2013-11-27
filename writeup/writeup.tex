@@ -4,21 +4,26 @@
 \usepackage[hidelinks]{hyperref}
 
 % I like international letters
-\usepackage[utf8]{inputenc}
+%\usepackage[utf8]{inputenc}
+\usepackage{newunicodechar}
+\newunicodechar{λ}{$\mathrm\lambda$}
 
-\usepackage{csquotes}
 \usepackage[authordate,strict,sorting=nyt,babel=other,cmsdate=both]{biblatex-chicago}
 \usepackage{mathtools}
 \bibliography{UCSB-GEOG172}
-
-% [s]pecialization
-%\hyphenation{pe-cial-iza-tion}
 
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \lhead{\emph{Matthew Wigginton Conway}}
 \chead{\emph{Draft}}
 \rhead{\emph{\today}}
+
+\usepackage{graphicx}
+
+\usepackage{geometry}
+
+\usepackage{listings}
+\lstset{language=R,breaklines=true}
 
 \title{Analyzing the Effects of Space and Time on Bikeshare Use: A Case Study in Washington, DC}
 \author{Matthew Wigginton Conway}
@@ -123,13 +128,120 @@ Such a result should not be surprising. To take a trivial example,
 commuters may ride from a residential area to a Metro stop each
 morning, and the reverse each evening. Weekend trips may represent
 people using the system for pleasure or entertainment rather than
-commuting. 
+commuting. The data confirm that usage patterns (measured by station
+origin-destination matrices) differ for each time period.
 
+This intensifies the need for rebalancing. Bikeshare demand is often not
+in equilibrium, so bikes must be moved from station to station by the system 
+operator in order to ensure that there are available bikes and available docks
+at all stations \autocite[108]{IDAE2007}. That is, if most people ride bikes from
+residential areas to commercial areas in the morning, there will not be enough bikes
+available in residential areas, and there will not be enough docks available in
+commercial areas. The problem is doubly-constrained, because there need to both be
+bikes available at each station in order for users to take a bike, and empty docks
+in order to return bikes. An interesting project would be to determine to what extent
+demand is cyclical. If the demand is cyclical, with people biking to 
+commercial areas in the morning and back to residential areas in the afternoon,
+providing a sufficient number of bikes would ameliorate the need for rebalancing.
+There may, however, be a general trend as well. For instance, people may prefer to
+bikeshare to work if they are in a hurry\footnote{People often take bikeshare when it is faster than transit 
+\autocite{Wong2012}}, and take transit home if they are tired. In this case, there could be a general trend
+of bikes moving towards commercial areas. This could be tested using the trip
+history data, but is beyond the scope of this project.
 
+\section{Effects of Space on Bikeshare Use}
 
+\begin{figure}[t]
+  \label{boxcox}
+  \includegraphics[width=\textwidth]{boxcox.pdf}
+  \caption{Station popularity, before and after Box-Cox transformation.}
+\end{figure}
+
+\clearpage\newpage
+\printbibliography
 
 \newpage
-\printbibliography
+\newgeometry{hmargin=0.5in,vmargin=1in}
+\fancyhfoffset[E,O]{0pt}
+\appendix
+\section{Source Code Listings}
+
+This appendix contains source code listings for the code used in this
+project. Data management and retrieval code is primarily Python,
+whereas analysis code is written in R.
+
+\subsection{Data Management}
+
+Scripts in this section are used to retrieve data from Capital
+Bikeshare and process it into a format suitable for analysis.
+
+\subsubsection{fetchData.sh}
+
+This shell script simply calls the other scripts to retrieve and
+process the data.
+
+\lstinputlisting[language=sh]{../datamgmt/fetchData.sh}
+
+\subsubsection{csvMerge.py}
+
+This script merges all of the quarterly CSV files into one large CSV
+file, merging columns that are the same but have different names in
+data files from different time periods.
+
+\lstinputlisting[language=Python]{../datamgmt/csvMerge.py}
+
+\subsubsection{expandFileWithXY.py}
+
+Station locations are not included in the trip history feed, only
+their names and numbers. This script takes a trip history file and
+adds spatial coordinates of the stations, based on the locations of
+stations in the CaBi XML API. It also projects the location to UTM so that
+Euclidean geometry can be used in calculations.
+
+\lstinputlisting[language=Python]{../datamgmt/expandFileWithXY.py}
+
+\subsection{Effects of Time on Bikeshare Use}
+
+This section contains scripts used to evaluate the effects of time on
+bikeshare use.
+
+\subsubsection{periods.R}
+
+This code simply defines how the time periods are coded. They are
+stored as single numbers in the file to reduce the file size.
+
+\lstinputlisting{../analysis/periods.R}
+
+\subsubsection{load\_data.R}
+
+This code loads and filter the trip data from CaBi, dropping trips
+over 20 km or 24 hours.
+
+\lstinputlisting{../analysis/load_data.R}
+
+\subsubsection{labeling.R}
+
+This code takes the Capital Bikeshare trip data, cleaned by the above
+scripts, and labels it based on trip start time period.
+
+\lstinputlisting{../analysis/labeling.R}
+
+\subsubsection{relabel.R}
+
+This script calculates test statistics for the observed distribution
+of trips then randomizes the distribution of trips to time periods,
+conducting a Monte Carlo simulation to determine the p-value of the
+observed trip distribution.
+
+\lstinputlisting{../analysis/relabel.R}
+
+\subsection{Effects of Space}
+\subsubsection{morans\_i.R}
+
+This script was used to calculate Moran's $I$ to calculate how
+spatially autocorrelated the popularity of bikeshare stations is.
+
+\lstinputlisting{../analysis/morans_i.R}
 
 \emph{Copyright © 2013 Matthew Wigginton Conway. All rights reserved}
 
