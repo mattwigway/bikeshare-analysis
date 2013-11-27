@@ -7,7 +7,7 @@ BREAK_LINKS_OVER <- 4000 # 4000 m, empirically determined; much less than 4000m 
                          # and Montgomery County.
 EXCLUDE_STATIONS <- c('32004', '32009', '32005', '32007') # Exclude the four stations in Montgomery County
 # StarLab
-#setwd('E:/GEOG172/bikeshare-analysis')
+setwd('E:/GEOG172/bikeshare-analysis')
 library(plyr)
 library(spatstat)
 library(spdep)
@@ -18,10 +18,12 @@ data <- read.csv('data/data-cleaned-labeled.csv')
 # First, calculate station popularities
 first <- function (vect) { return(vect[1]) }
 
+# This function returns the time as seconds since January 1, 1970
 epoch <- function (date) {
   return(as.integer(as.POSIXct(date)))
 }
 
+# Calculate the lowest date in a vector of dates. Return an epoch time.
 minDate <- function (rawDates) {
   lowest <- NA
   
@@ -39,6 +41,7 @@ minDate <- function (rawDates) {
   return(lowest)
 }
 
+# Calculate the largest date in a vector of dates. Return an epoch time.
 maxDate <- function (rawDates) {
   greatest <- NA
   
@@ -57,6 +60,7 @@ maxDate <- function (rawDates) {
 }
 
 # pop can be interpreted as trips per day, iff you're using population data
+# First we summarise the bike movements at the start and end of trips
 popularityDest <- ddply(data, c('end_terminal'), summarise,
 				# No need to have x's and y's here, they come from orig
                         NDest=length(end_x),
@@ -67,13 +71,12 @@ popularityDest <- ddply(data, c('end_terminal'), summarise,
 popularityOrig <- ddply(data, c('start_terminal'), summarise,
                         x=first(start_x),
                         y=first(start_y),
-                        # note: *200 is to counter effects of random sample
-                        # remove when using population
                         NOrig=length(start_x),
                         firstOrig=minDate(start_date),
 				lastOrig=maxDate(start_date)
 )
 
+# Now combine the origins and the destinations
 # Full inner join; remove any station that doesn't have both trip origins and trip terminations
 popularity <- merge(popularityOrig, popularityDest, all=F, by.x='start_terminal', by.y='end_terminal')
 popularity <- rename(popularity, c("start_terminal"="terminal"))
@@ -85,8 +88,10 @@ attach(popularity)
 
 # Sum up the number of bike movements and divide by the number of days the station is open
 # First, calculate span
+# The matrix bit gets the first movement recorded at the station, either an origin or a destionation.
+# We can use min/max because all times are represented as seconds since Jan 1, 1970 at this point.
 lastOpDate <- apply(matrix(c(lastOrig, lastDest), ncol=2), 1, max, na.rm=T)
-firstOpDate <- apply(matrix(c(lastOrig, lastDest), ncol=2), 1, min, na.rm=T)
+firstOpDate <- apply(matrix(c(firstOrig, firstDest), ncol=2), 1, min, na.rm=T)
 spans <- (((lastOpDate - firstOpDate) / 86400) + 1)
 popularity$pop <- (NOrig + NDest) / spans
 
@@ -107,15 +112,19 @@ popularity$bcpop <- bctransform(popularity$pop, bclam$result[1])
 cat('Box-Cox p-values:', bclam$result[2:4,])
 
 detach(popularity)
-attach(popularity)
 
 # save the popularities to avoid recalculation later
 write.csv(popularity, 'data/station-popularities.csv')
+# Re-read popularities: start from here if you're repeating the analysis.
+popularity <- read.csv('data/station-popularities.csv')
+
+attach(popularity)
 
 # Make a plot for the writeup showing why we used Box-Cox
 layout(matrix(1:2, 1, 2))
 hist(pop, main=NA, xlab='Bike movements/day', ylab='Number of stations')
-hist(bcpop, main=NA, xlab=paste('Box-Cox transformed bike movements/day (λ=', bclam$result[1], ')', sep=''), ylab='Number of stations')
+hist(bcpop, main=NA, xlab=paste('Box-Cox transformed bike movements/day (lambda=', bclam$result[1], ')', sep=''), ylab='Number of stations')
+graphics.off()
 
 # build the neighbor matrix
 nbmat <- tri2nb(popularity[,c('x','y')], row.names=terminal)
