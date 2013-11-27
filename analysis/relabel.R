@@ -70,8 +70,6 @@ for (i in period.all) {
   }
 }
 
+# Write a CSV file that is used to generate the table in the TeX writeup
 write.csv(pvals, 'writeup/pvals.csv')
-
-# make a barplot of the label frequencies
-barplot(xtabs(~label, data))
 

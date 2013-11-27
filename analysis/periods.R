@@ -4,7 +4,7 @@
 # A few functions for labeling
 # This one labels based on time of day.
 # We use the same time-of-day spans as used by MWCOG in their four-step model, page 14:
-# Metropolitan Washington Council of Governments. User’s Guide for the MWCOG/NCRTPB Travel
+# Metropolitan Washington Council of Governments. User's Guide for the MWCOG/NCRTPB Travel
 # Forecasting Model, Version 2.3, Build 52: Draft Report. Washington, 2013.
 # http://www.mwcog.org/transportation/activities/models/files/V2.3.52_Users_Guide_v2_w_appA.pdf.
 
