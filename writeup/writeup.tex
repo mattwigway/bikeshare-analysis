@@ -46,23 +46,29 @@ usage of the bikeshare system.
 
 \section{Data Processing}
 
-Before analysis could be undertaken, the data needed to be obtained and cleaned. 
-The data are available from the CaBi website\footnote{\url{http://capitalbikeshare.com/system-data}}
-as a series of quarterly CSV files. Data from the fourth quarter of 2010
-through the 2nd quarter of 2013 were used. Each record contains the origin and
-destination of the trip, the start and end times, and ancillary information.
-The script \reflst{fetchData.sh} was used to download the CSV files. The files were then
-merged using \reflst{csvMerge.py}. This script also cleaned the data; the column names in
-the different CSV files differed slightly so the script contains code to normalize them.
-It also renames the columns to remove whitespace, making it simpler to use the data in R.
+Before analysis could be undertaken, the data needed to be obtained
+and cleaned.  The data are available from the CaBi
+website\footnote{\url{http://capitalbikeshare.com/system-data}} as a
+series of quarterly CSV files. Data from the fourth quarter of 2010
+through the 2nd quarter of 2013 were used. Each record contains the
+origin and destination of the trip, the start and end times, and
+ancillary information.  The script \reflst{fetchData.sh} was used to
+download the CSV files. The files were then merged using
+\reflst{csvMerge.py}. This script also cleaned the data; the column
+names in the different CSV files differed slightly so the script
+contains code to normalize them.  It also renames the columns to
+remove whitespace, making it simpler to use the data in R.
 
-There are no spatial data present in the trip history files. To remedy this,
-station locations were retrieved from the CaBi real-time
+There are no spatial data present in the trip history files. To remedy
+this, station locations were retrieved from the CaBi real-time
 API\footnote{\url{http://capitalbikeshare.com/data/stations/bikeStations.xml}}
-and merged with the trip history data using \reflst{expandFileWithXY.py}.\marginpar{discuss stations with no geo coordinates}
+and merged with the trip history data using
+\reflst{expandFileWithXY.py}.\marginpar{discuss stations with no geo
+  coordinates}
 
-Finally, \reflst{load_data.R} was used to load the data into R, removing trips greater than
-20km or 2 hours, assuming these trips to be errors.
+Finally, \reflst{load\string_data.R} was used to load the data into R,
+removing trips greater than 20km or 2 hours, assuming these trips to
+be errors.
 
 \section{Time of Day Effects}
 
@@ -192,15 +198,87 @@ stations having a large number of bike movements per day. In order to
 better analyze the data, a Box-Cox transformation was undertaken to
 normalize the distribution. Using the Shapiro-Wilks estimator, the
 Box-Cox parameter was estimated as $\lambda = 0.33$. This did serve to
-make the distribution more symmetric (see fig. \ref{boxcox}). The
-distribution, however, is bimodal. This should not effect the Moran's
-$I$ calculation, however, but explanation of this would be a
-worthwhile direction for future research.
+make the distribution more symmetric (see fig. \ref{fig:boxcox}). The
+transformed distribution, however, is bimodal. This should not effect
+the Moran's $I$ calculation, however, but explanation of this would be
+a worthwhile direction for future research.
 
 \begin{figure}[t]
-  \label{boxcox}
   \includegraphics[width=\textwidth]{boxcox.pdf}
-  \caption{Station popularity, before and after Box-Cox transformation.}
+  \caption{\label{fig:boxcox}Station popularity, before and after Box-Cox transformation.}
+\end{figure}
+
+\begin{figure}[t]
+  \includegraphics[width=\textwidth]{connectivity_labels.pdf}
+  \caption{\label{fig:nbmat} Station adjacency graph: Delaunay triangulation with links
+    longer than 4km removed.}
+\end{figure}
+
+To calculate $I$, a weight matrix was first calculated. This was done
+by creating a Delaunay triangulation of the stations using the
+\texttt{tri2nb} function from the \texttt{spdep} package. Links longer
+than 4km were removed, which left two graph components, one in
+Washington, Arlington and Alexandria and one in Montgomery County,
+Maryland. The component in Montgomery County was removed for the
+purposes of this analysis. 4km was chosen as a the maximum link length
+visually, removing the most outrageous links while still keeping some
+degree of connectivity. A Shiny script was created to visualize the
+network with different thresholds for breaking links; a slider can be
+used to adjust the threshold while seeing results in real time (see
+Figure \ref{fig:shiny}, \reflst{server.R} and \reflst{ui.R}). The
+adjacency graph defined is shown in figure \ref{fig:nbmat}.
+
+The adjacency graph was then converted to a weight matrix in
+row-standardized form (that is, all rows sum to 1). Thus the
+neighborhood value of a point can be interpreted as a local
+mean. Moran's $I$ was calculated, and a Moran plot was generated for
+further interpretation.
+
+\subsection{Results}
+
+A Moran's $I$ value of 0.78 was found ($p < 0.05$), indicating strong
+positive spatial autocorrelation between stations. That is, stations
+near each other tend to have similar popularities. Upon examining the
+Moran plot (fig. \ref{fig:moran}), we see clearly the positive
+trend. We also see that the influential points (marked
+\rlap{\tiny{+}}{$\diamond$}) are fairly evenly distributed about the
+scatter. These influential points are somewhat spatially dispersed,
+but do appear to be somewhat clustered (see the highlighted points in
+fig. \ref{fig:map}).\marginpar{talk about locations}
+
+\begin{figure}[t]
+  \includegraphics[width=\textwidth]{moran_plot.pdf}
+  \caption{\label{fig:moran} Moran plot of station popularity.}
+\end{figure}
+
+% Could we test for spatial distribution of Moran outliers?
+
+
+\subsection{Discussion}
+
+There is significant positive spatial autocorrelation in the
+popularities of bikeshare stations. This makes sense intuitively, in
+terms of both first- and second-order effects. On the first-order
+side, areas with many attractions are likely to have more bike
+movements at all stations in the area. On the second-order side, each
+trip requires two stations within biking distance of each other; more
+stations closer together means more options for trips. One could also
+hypothesize an inhibition effect at very fine scales in some
+situations: if there are two stations very near each other, but one is
+preferable, it may inhibit use of the other one. In the Bay Area
+Bikeshare system, for example, there are two stations, one at the
+commuter rail station in San Francisco and one directly across the
+street. It is likely that the one across the street is less popular
+because people prefer to use the one in front of the station when
+possible. This project did not attempt to differentiate between first-
+and second-order effects.
+
+
+
+\begin{figure}[t]
+  \includegraphics[width=\textwidth]{popularities.pdf}
+  \caption{\label{fig:map} Map of station popularities and Moran
+    influential points.}
 \end{figure}
 
 \clearpage\newpage
@@ -296,6 +374,21 @@ This script was used to calculate Moran's $I$ to calculate how
 spatially autocorrelated the popularity of bikeshare stations is.
 
 \lstinputlisting{../analysis/morans_i.R}
+
+\subsubsection{ui.R}
+\label{ui.R}
+
+This script is the UI for the Shiny application used to evaluate the
+link threshold distance (see figure \ref{fig:shiny}).
+
+\lstinputlisting{../analysis/cull_links_shiny/ui.R}
+
+\subsubsection{server.R}
+
+This is the server component of the Shiny application used to evaluate
+the link threshold distance.
+
+\lstinputlisting{../analysis/cull_links_shiny/server.R}
 
 \emph{Copyright © 2013 Matthew Wigginton Conway. All rights reserved}
 
