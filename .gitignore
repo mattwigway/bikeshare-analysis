@@ -11,3 +11,4 @@ writeup.pdf
 *.log
 *.out
 *.run.xml
+*.bbl
