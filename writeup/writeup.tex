@@ -30,6 +30,7 @@
 \date{\today}
 
 \begin{document}
+\fancyhfoffset[E,O]{0pt}
 \maketitle
 
 Bikesharing is a relatively new form of shared transportation wherein
@@ -199,7 +200,7 @@ better analyze the data, a Box-Cox transformation was undertaken to
 normalize the distribution. Using the Shapiro-Wilks estimator, the
 Box-Cox parameter was estimated as $\lambda = 0.33$. This did serve to
 make the distribution more symmetric (see fig. \ref{fig:boxcox}). The
-transformed distribution, however, is bimodal. This should not effect
+transformed distribution, however, is bimodal. This should not affect
 the Moran's $I$ calculation, however, but explanation of this would be
 a worthwhile direction for future research.
 
@@ -273,16 +274,54 @@ because people prefer to use the one in front of the station when
 possible. This project did not attempt to differentiate between first-
 and second-order effects.
 
-
-
 \begin{figure}[t]
   \includegraphics[width=\textwidth]{popularities.pdf}
   \caption{\label{fig:map} Map of station popularities and Moran
     influential points.}
 \end{figure}
 
+\subsection{General Discussion and Further Research}
+
+This project found that both time and space exert significant effects
+on bikeshare use. The distributions of trips between stations differ
+significantly at different times of day. There also tends to be
+spatial autocorrelation; popular stations tend to be near each other.
+
+One interesting topic for further research would be to look further
+into the origin-destination matrices at different times of day. One
+could attempt to determine the direction of movement of the bikes at
+different times of day, and the determinants of the movement (for
+instance, are people using the bikes to commute and thus taking them
+from Metro stations to downtown areas?). This research would be useful
+in that it could inform rebalancing.\marginpar{Talk about DSSG/Velez
+  et al}
+
+Another avenue for further research would be to theorize what drives
+station popularity. It seems likely that the accessibility of the
+station is a driver. For instance, stations more accessible to jobs,
+housing or transit stops are likely to be more popular. Additionally,
+stations more accessible to other stations may be more popular; the
+more stations one can reach by bike from a given location, the more
+options one has for potential trips. This could be investigated using
+a regression with station popularity as the dependent variable and the
+various forms of accessibility as independent variables. If the model
+proved to be transferable, it would be valuable to planners
+implementing new bikeshare systems.
+
+The bikeshare trip data provides a wealth of information for
+analysis. Very rarely do researchers have access to complete
+origin-destination matrices for a particular mode. This research
+confirms the value of geography in explaining the use of this new
+transportation tool. Further research could do more with this data,
+creating predictive tools to assist bikeshare system operators and
+planners.
+
 \clearpage\newpage
 \printbibliography
+
+\vspace{5em}
+
+\emph{Copyright © 2013 Matthew Wigginton Conway. CC BY-NC 3.0.}
 
 \newpage
 \newgeometry{hmargin=0.5in,vmargin=1in}
@@ -292,7 +331,9 @@ and second-order effects.
 
 This appendix contains source code listings for the code used in this
 project. Data management and retrieval code is primarily Python,
-whereas analysis code is written in R.
+whereas analysis code is written in R. All of the code used in this
+project is licensed under the Apache License, is also available at
+\url{http://www.github.com/mattwigway/bikeshare-analysis}.
 
 \subsection{Data Management}
 
@@ -389,7 +430,5 @@ This is the server component of the Shiny application used to evaluate
 the link threshold distance.
 
 \lstinputlisting{../analysis/cull_links_shiny/server.R}
-
-\emph{Copyright © 2013 Matthew Wigginton Conway. All rights reserved}
 
 \end{document}
