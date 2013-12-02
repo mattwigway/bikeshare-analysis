@@ -56,7 +56,7 @@ origin and destination of the trip, the start and end times, and
 ancillary information.  The script \reflst{fetchData.sh} was used to
 download the CSV files. The files were then merged using
 \reflst{csvMerge.py}. This script also cleaned the data; the column
-names in the different CSV files differed slightly so the script
+names in the CSV files from different quarter differ slightly, so the script
 contains code to normalize them.  It also renames the columns to
 remove whitespace, making it simpler to use the data in R.
 
@@ -68,7 +68,7 @@ and merged with the trip history data using
   coordinates}
 
 Finally, \reflst{load\string_data.R} was used to load the data into R,
-removing trips greater than 20km or 2 hours, assuming these trips to
+removing trips longer than 20km or 2 hours, assuming these trips to
 be errors.
 
 \section{Time of Day Effects}
@@ -78,7 +78,7 @@ bicycles balanced across the system. The problem is doubly
 constrained, because the system operator not only needs to keep enough
 bikes available at all stations, but also needs to prevent stations
 from becoming completely full and thus preventing people from parking
-their bikes. This is usually accomplished via a fleet of trucks which
+the bikes. This is usually accomplished via a fleet of trucks which
 pick up bikes from overfull stations and rebalance them to empty or
 nearly empty stations.
 
@@ -95,11 +95,12 @@ weekend patterns \autocite[14]{MWCOG2013}.
 \subsection{Methodology}
 
 Each trip in the data was first assigned a time period based on its
-start time \reflst{labeling.R}. For each time period, an origin-destination matrix was
-created, showing the number of trips between each station pair. The
-matrices were then compared pairwise, comparing each time period to
-every other time period. The following test statistic was computed for
-each pairwise comparison.
+start time using \reflst{labeling.R}. For each time period, an
+origin-destination matrix was created, showing the number of trips
+between each station pair using \reflst{relabel.R}. The matrices were
+then compared pairwise, comparing each time period to every other time
+period. The following test statistic was computed for each pairwise
+comparison.
 
 \begin{equation}\label{eq:timets}
  \displaystyle\sum_i \sum_j (t_{ij,1} - t_{ij,2})^2 \over
@@ -122,15 +123,16 @@ that the total number of trips in each matrix are the same. That is,
 
 Once test statistics were computed for each pair of time periods, a
 Monte Carlo simulation was undertaken to determine whether the time
-periods differ significantly. The trips were originally used to
-generate the origin-destination randomly reassigned to different time
-periods. The number of trips in each time period was held
+periods differ significantly. The trips that were originally used to
+generate the origin-destination were randomly reassigned to different
+time periods. The number of trips in each time period was held
 constant. Since this worked by relabeling the existing trips, the
 distribution of trips to origins and destinations was constant over
 all time periods though it varied within time
 periods. Origin-destination matrices were then calculated using the
 relabeled trips, and the same pairwise comparison was done and test
-statistics computed. This process was repeated 999 times.
+statistics computed. This process was repeated 999 times. This
+simulation was performed by \reflst{relabel.R}.
 
 \subsection{Results}
 
@@ -170,39 +172,44 @@ the demand is cyclical, with people biking to commercial areas in the
 morning and back to residential areas in the afternoon, providing a
 sufficient number of bikes would ameliorate the need for rebalancing.
 There may, however, be a general trend as well. For instance, people
-may prefer to bikeshare to work if they are in a hurry\footnote{People
-  often take bikeshare when it is faster than transit
-  \autocite{Wong2012}.}, and take transit home if they are tired. In
-this case, there could be a general trend of bikes moving towards
-commercial areas. This could be tested using the trip history data,
-but is beyond the scope of this project.
+may prefer to bikeshare to work if they are in a hurry and bikeshare
+is faster than transit\footnote{Using this same trip history data, it
+  was found that many trips in the data are faster than comparable
+  bikeshare trips; people tend to use bikeshare for trips where it is
+  faster than transit \autocite{Wong2012}.}, and take transit
+home if they are tired. In this case, there could be a general trend
+of bikes moving towards commercial areas. This could be tested using
+the trip history data, but is beyond the scope of this project.
 
 \section{Effects of Space on Bikeshare Use}
 
 Some bike share stations are, of course, more popular than others. It
-was hypothesized that station popularities are spatially
-autocorrelated. That is, stations near each other would tend to have
-similar popularities. To test this, a Moran's $I$ statistic was
-computed to evaluate whether there is significant autocorrelation
-between station popularities.
+was hypothesized that station popularities (defined here as the
+average number of bike movements---both pickups and dropoffs---per
+day) are spatially autocorrelated. That is, stations near each other
+would tend to have similar popularities. To test this, a Moran's $I$
+statistic was computed to evaluate whether there is significant
+autocorrelation between station popularities.
 
 \subsection{Methodology}
 
 Data were loaded into R, and were then summarized to get a count of
 bike movements for each station. This process was repeated twice to
 get counts for both the number of trips originating and the number of
-trips terminating at each station. This number of bike movements was
-then normalized by dividing by the number of days each station had
-been open. The count of bike movements is skewed right, with many
-stations having relatively few bike movements per day, and a few
-stations having a large number of bike movements per day. In order to
-better analyze the data, a Box-Cox transformation was undertaken to
-normalize the distribution. Using the Shapiro-Wilks estimator, the
-Box-Cox parameter was estimated as $\lambda = 0.33$. This did serve to
-make the distribution more symmetric (see fig. \ref{fig:boxcox}). The
-transformed distribution, however, is bimodal. This should not affect
-the Moran's $I$ calculation, however, but explanation of this would be
-a worthwhile direction for future research.
+trips terminating at each station; the results were then summed by
+station. This number of bike movements was then normalized by dividing
+by the number of days each station had been open. The count of bike
+movements is skewed right, with many stations having relatively few
+bike movements per day, and a few stations having a large number of
+bike movements per day. In order to better analyze the data, a Box-Cox
+transformation was undertaken to normalize the distribution. Using the
+Shapiro-Wilks estimator, the Box-Cox parameter was estimated as
+$\lambda = 0.33$. This did serve to make the distribution more
+symmetric (see fig. \ref{fig:boxcox} for a comparison between the
+untransformed and transformed distribution). The transformed
+distribution, however, is bimodal. This should not affect the Moran's
+$I$ calculation, however, but explanation of this would be a
+worthwhile direction for future research.
 
 \begin{figure}[t]
   \includegraphics[width=\textwidth]{boxcox.pdf}
@@ -219,7 +226,7 @@ To calculate $I$, a weight matrix was first calculated. This was done
 by creating a Delaunay triangulation of the stations using the
 \texttt{tri2nb} function from the \texttt{spdep} package. Links longer
 than 4km were removed, which left two graph components, one in
-Washington, Arlington and Alexandria and one in Montgomery County,
+Washington, Arlington and Alexandria, and one in Montgomery County,
 Maryland. The component in Montgomery County was removed for the
 purposes of this analysis. 4km was chosen as a the maximum link length
 visually, removing the most outrageous links while still keeping some
@@ -266,13 +273,13 @@ trip requires two stations within biking distance of each other; more
 stations closer together means more options for trips. One could also
 hypothesize an inhibition effect at very fine scales in some
 situations: if there are two stations very near each other, but one is
-preferable, it may inhibit use of the other one. In the Bay Area
-Bikeshare system, for example, there are two stations, one at the
-commuter rail station in San Francisco and one directly across the
-street. It is likely that the one across the street is less popular
-because people prefer to use the one in front of the station when
-possible. This project did not attempt to differentiate between first-
-and second-order effects.
+preferable, it may inhibit use of the other one. For example, there
+are two stations near the San Francisco train station in the Bay Area
+Bikeshare system. One is directly in front of the station, and one is
+across the street. It is likely that the one across the street is less
+popular because people prefer to use the one in front of the station
+when bikes or docks are available. This project did not attempt to
+differentiate between first- and second-order effects.
 
 \begin{figure}[t]
   \includegraphics[width=\textwidth]{popularities.pdf}
@@ -291,8 +298,8 @@ One interesting topic for further research would be to look further
 into the origin-destination matrices at different times of day. One
 could attempt to determine the direction of movement of the bikes at
 different times of day, and the determinants of the movement (for
-instance, are people using the bikes to commute and thus taking them
-from Metro stations to downtown areas?). This research would be useful
+instance, are people from Metro stations to downtown areas to downtown
+areas in the morning due to the commute?). This research would be useful
 in that it could inform rebalancing.\marginpar{Talk about DSSG/Velez
   et al}
 
@@ -425,6 +432,7 @@ link threshold distance (see figure \ref{fig:shiny}).
 \lstinputlisting{../analysis/cull_links_shiny/ui.R}
 
 \subsubsection{server.R}
+\label{server.R}
 
 This is the server component of the Shiny application used to evaluate
 the link threshold distance.
