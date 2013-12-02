@@ -2,3 +2,12 @@
 .Rhistory
 .RData
 data
+*~
+writeup.pdf
+*.aux
+*.blx
+*.blg
+*-blx.bib
+*.log
+*.out
+*.run.xml
