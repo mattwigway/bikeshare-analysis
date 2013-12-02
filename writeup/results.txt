@@ -1,0 +1,11 @@
+
+	Moran's I test under randomisation
+
+data:  bcpop  
+weights: weights  
+
+Moran I statistic standard deviate = 20.1427, p-value < 2.2e-16
+alternative hypothesis: greater
+sample estimates:
+Moran I statistic       Expectation          Variance 
+      0.780535053      -0.004329004       0.001518284 
