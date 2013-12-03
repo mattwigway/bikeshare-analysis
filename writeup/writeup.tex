@@ -222,6 +222,15 @@ worthwhile direction for future research.
     longer than 4km removed.}
 \end{figure}
 
+\begin{figure}[t]
+  \includegraphics[width=\textwidth]{shiny.png}
+  \caption{\label{fig:shiny} A Shiny application for interactively
+    visualizing networks with different link lengths; adjusting the
+    slider changes the maximum link length in the network, breaking
+    more or fewer links in the original triangulation.}
+\end{figure}
+
+
 To calculate $I$, a weight matrix was first calculated. This was done
 by creating a Delaunay triangulation of the stations using the
 \texttt{tri2nb} function from the \texttt{spdep} package. Links longer
@@ -230,7 +239,7 @@ Washington, Arlington and Alexandria, and one in Montgomery County,
 Maryland. The component in Montgomery County was removed for the
 purposes of this analysis. 4km was chosen as a the maximum link length
 visually, removing the most outrageous links while still keeping some
-degree of connectivity. A Shiny script was created to visualize the
+degree of connectivity. A Shiny application was created to visualize the
 network with different thresholds for breaking links; a slider can be
 used to adjust the threshold while seeing results in real time (see
 Figure \ref{fig:shiny}, \reflst{server.R} and \reflst{ui.R}). The
