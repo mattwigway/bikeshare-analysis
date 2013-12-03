@@ -4,10 +4,10 @@
     <mapcanvas>
         <units>meters</units>
         <extent>
-            <xmin>314395.503378</xmin>
-            <ymin>4296482.000000</ymin>
-            <xmax>333632.496622</xmax>
-            <ymax>4314332.000000</ymax>
+            <xmin>322090.973896</xmin>
+            <ymin>4306132.348735</ymin>
+            <xmax>322710.405218</xmax>
+            <ymax>4306707.118865</ymax>
         </extent>
         <projections>1</projections>
         <destinationsrs>
@@ -23,7 +23,7 @@
             </spatialrefsys>
         </destinationsrs>
     </mapcanvas>
-    <legend updateDrawingOrder="true" activeLayer="station_popularities_copy20131126223002892">
+    <legend updateDrawingOrder="true" activeLayer="dc_baltimore_osm_line20131122081710081">
         <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="dc-baltimore.osm-point" showFeatureCount="0">
             <filegroup open="true" hidden="false">
                 <legendlayerfile isInOverview="0" layerid="dc_baltimore_osm_point20131122081710199" visible="0"/>
@@ -39,7 +39,7 @@
                 <legendlayerfile isInOverview="0" layerid="station_popularities20131126222821036" visible="1"/>
             </filegroup>
         </legendlayer>
-        <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="Moran Outliers" showFeatureCount="0">
+        <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="Moran Influential Points" showFeatureCount="0">
             <filegroup open="true" hidden="false">
                 <legendlayerfile isInOverview="0" layerid="station_popularities_copy20131126223002892" visible="1"/>
             </filegroup>
@@ -56,7 +56,7 @@
         </legendlayer>
     </legend>
     <Composer title="Stations" visible="0">
-        <Composition printResolution="300" paperWidth="279.4" snapGridOffsetX="0" snapGridResolution="10" snapGridOffsetY="0" alignmentSnap="1" snapping="0" numPages="1" paperHeight="279.4" alignmentSnapTolerance="2" printAsRaster="0">
+        <Composition printResolution="300" paperWidth="279.4" snapGridOffsetX="0" snapGridResolution="10" snapGridOffsetY="0" alignmentSnap="1" snapping="0" numPages="1" paperHeight="279.4" alignmentSnapTolerance="2" printAsRaster="1">
             <ComposerMap keepLayerSet="false" overviewFrameMap="-1" id="0" previewMode="Cache" drawCanvasItems="true">
                 <overviewFrame overviewBlendMode="0" overviewFrameMap="-1" overviewInverted="false">
                     <symbol alpha="0.3" type="fill" name="">
@@ -94,7 +94,7 @@
                         <fontColor red="0" blue="0" green="0"/>
                     </Annotation>
                 </Grid>
-                <ComposerItem width="279.4" x="0" transparency="0" y="0" rotation="0" height="279.4" positionMode="0" frame="false" outlineWidth="0.3" zValue="1" lastValidViewScaleFactor="3.01355" uuid="{9207430a-3a43-453f-a460-fb152673f8cc}" id="" background="true" blendMode="0" positionLock="false">
+                <ComposerItem width="279.4" x="0" transparency="0" y="0" rotation="0" height="279.4" positionMode="0" frame="false" outlineWidth="0.3" zValue="1" lastValidViewScaleFactor="2.33238" uuid="{9207430a-3a43-453f-a460-fb152673f8cc}" id="" background="true" blendMode="0" positionLock="false">
                     <FrameColor alpha="255" red="0" blue="0" green="0"/>
                     <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
                 </ComposerItem>
@@ -102,7 +102,7 @@
         </Composition>
     </Composer>
     <Composer title="map" visible="0">
-        <Composition printResolution="1200" paperWidth="279.4" snapGridOffsetX="0" snapGridResolution="10" snapGridOffsetY="0" alignmentSnap="1" snapping="0" numPages="1" paperHeight="215.9" alignmentSnapTolerance="2" printAsRaster="1">
+        <Composition printResolution="800" paperWidth="279.4" snapGridOffsetX="0" snapGridResolution="10" snapGridOffsetY="0" alignmentSnap="1" snapping="0" numPages="1" paperHeight="215.9" alignmentSnapTolerance="2" printAsRaster="1">
             <ComposerLegend symbolWidth="7" title="Legend" boxSpace="2" splitLayer="0" equalColumnWidth="0" map="0" symbolHeight="4" wrapChar="" fontColor="#000000" columnSpace="2" columnCount="1">
                 <styles>
                     <style name="title" font="Ubuntu,16,-1,5,50,0,0,0,0,0"/>
@@ -228,8 +228,8 @@
                             </symbols>
                         </VectorClassificationItemNg>
                     </LayerItem>
-                    <LayerItem layerId="station_popularities_copy20131126223002892" userText="" style="subgroup" text="Moran Outliers" showFeatureCount="0">
-                        <VectorClassificationItemNg userText="" text="+, +">
+                    <LayerItem layerId="station_popularities_copy20131126223002892" userText="" style="subgroup" text="Moran Influential Points" showFeatureCount="0">
+                        <VectorClassificationItemNg userText="" text="More popular than nearby stations">
                             <symbols>
                                 <symbol alpha="1" type="marker" name="classificationSymbol">
                                     <layer pass="0" class="SimpleMarker" locked="0">
@@ -248,45 +248,7 @@
                                 </symbol>
                             </symbols>
                         </VectorClassificationItemNg>
-                        <VectorClassificationItemNg userText="" text="+, -">
-                            <symbols>
-                                <symbol alpha="1" type="marker" name="classificationSymbol">
-                                    <layer pass="0" class="SimpleMarker" locked="0">
-                                        <prop k="angle" v="0"/>
-                                        <prop k="color" v="166,219,160,255"/>
-                                        <prop k="color_border" v="166,219,160,255"/>
-                                        <prop k="name" v="circle"/>
-                                        <prop k="offset" v="0,0"/>
-                                        <prop k="offset_unit" v="MM"/>
-                                        <prop k="outline_width" v="0"/>
-                                        <prop k="outline_width_unit" v="MM"/>
-                                        <prop k="scale_method" v="area"/>
-                                        <prop k="size" v="4"/>
-                                        <prop k="size_unit" v="MM"/>
-                                    </layer>
-                                </symbol>
-                            </symbols>
-                        </VectorClassificationItemNg>
-                        <VectorClassificationItemNg userText="" text="-, +">
-                            <symbols>
-                                <symbol alpha="1" type="marker" name="classificationSymbol">
-                                    <layer pass="0" class="SimpleMarker" locked="0">
-                                        <prop k="angle" v="0"/>
-                                        <prop k="color" v="194,165,207,255"/>
-                                        <prop k="color_border" v="194,165,207,255"/>
-                                        <prop k="name" v="circle"/>
-                                        <prop k="offset" v="0,0"/>
-                                        <prop k="offset_unit" v="MM"/>
-                                        <prop k="outline_width" v="0"/>
-                                        <prop k="outline_width_unit" v="MM"/>
-                                        <prop k="scale_method" v="area"/>
-                                        <prop k="size" v="4"/>
-                                        <prop k="size_unit" v="MM"/>
-                                    </layer>
-                                </symbol>
-                            </symbols>
-                        </VectorClassificationItemNg>
-                        <VectorClassificationItemNg userText="" text="-, -">
+                        <VectorClassificationItemNg userText="" text="Less popular than nearby stations">
                             <symbols>
                                 <symbol alpha="1" type="marker" name="classificationSymbol">
                                     <layer pass="0" class="SimpleMarker" locked="0">
@@ -307,7 +269,7 @@
                         </VectorClassificationItemNg>
                     </LayerItem>
                 </Model>
-                <ComposerItem width="58.1489" x="220.851" transparency="0" y="121.187" rotation="0" height="94.7133" positionMode="0" frame="true" outlineWidth="0.3" zValue="2" lastValidViewScaleFactor="3.02013" uuid="{6dec582b-c934-44de-836d-599d20667e6a}" id="" background="true" blendMode="0" positionLock="false">
+                <ComposerItem width="78" x="201.4" transparency="0" y="135.452" rotation="0" height="80.4482" positionMode="0" frame="true" outlineWidth="0.3" zValue="2" lastValidViewScaleFactor="3.01521" uuid="{6dec582b-c934-44de-836d-599d20667e6a}" id="" background="true" blendMode="0" positionLock="false">
                     <FrameColor alpha="255" red="0" blue="0" green="0"/>
                     <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
                 </ComposerItem>
@@ -349,7 +311,7 @@
                         <fontColor red="0" blue="0" green="0"/>
                     </Annotation>
                 </Grid>
-                <ComposerItem width="279" x="0" transparency="0" y="0" rotation="0" height="217" positionMode="0" frame="false" outlineWidth="0.3" zValue="1" lastValidViewScaleFactor="3.07515" uuid="{911b984d-332a-4909-8ab8-701b89cb7630}" id="" background="true" blendMode="0" positionLock="false">
+                <ComposerItem width="279" x="0" transparency="0" y="0" rotation="0" height="217" positionMode="0" frame="false" outlineWidth="0.3" zValue="1" lastValidViewScaleFactor="3.01521" uuid="{911b984d-332a-4909-8ab8-701b89cb7630}" id="" background="true" blendMode="0" positionLock="false">
                     <FrameColor alpha="255" red="0" blue="0" green="0"/>
                     <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
                 </ComposerItem>
@@ -389,7 +351,7 @@
                     <symbol alpha="1" type="line" name="0">
                         <layer pass="0" class="SimpleLine" locked="0">
                             <prop k="capstyle" v="square"/>
-                            <prop k="color" v="212,212,212,255"/>
+                            <prop k="color" v="180,180,180,255"/>
                             <prop k="customdash" v="5;2"/>
                             <prop k="customdash_unit" v="MM"/>
                             <prop k="joinstyle" v="bevel"/>
@@ -945,7 +907,7 @@
             <excludeAttributesWFS/>
             <attributeactions/>
         </maplayer>
-        <maplayer minimumScale="0" maximumScale="1e+08" minLabelScale="0" maxLabelScale="1e+08" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" scaleBasedLabelVisibilityFlag="0">
+        <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" minLabelScale="0" maxLabelScale="1e+08" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" scaleBasedLabelVisibilityFlag="0">
             <id>labels20131122082524512</id>
             <datasource>../data/labels.shp</datasource>
             <title></title>
@@ -982,7 +944,7 @@
                             <prop k="outline_width" v="0"/>
                             <prop k="outline_width_unit" v="MM"/>
                             <prop k="scale_method" v="area"/>
-                            <prop k="size" v="2"/>
+                            <prop k="size" v="0"/>
                             <prop k="size_unit" v="MM"/>
                         </layer>
                     </symbol>
@@ -1110,7 +1072,7 @@
             </customproperties>
             <blendMode>0</blendMode>
             <featureBlendMode>0</featureBlendMode>
-            <layerTransparency>100</layerTransparency>
+            <layerTransparency>0</layerTransparency>
             <displayfield>id</displayfield>
             <label>0</label>
             <labelattributes>
@@ -1145,7 +1107,7 @@
             <excludeAttributesWFS/>
             <attributeactions/>
         </maplayer>
-        <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" minLabelScale="0" maxLabelScale="1e+08" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" scaleBasedLabelVisibilityFlag="0">
+        <maplayer minimumScale="0" maximumScale="1e+08" minLabelScale="0" maxLabelScale="1e+08" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" scaleBasedLabelVisibilityFlag="0">
             <id>station_popularities20131126222821036</id>
             <datasource>file:../data/station-popularities.csv?type=csv&amp;xField=x_1&amp;yField=y&amp;spatialIndex=no&amp;subsetIndex=no&amp;watchFile=no</datasource>
             <title></title>
@@ -1457,15 +1419,15 @@
                 <edittype labelontop="0" editable="1" type="0" name="x_1"/>
                 <edittype labelontop="0" editable="1" type="0" name="y"/>
             </edittypes>
-            <editform></editform>
+            <editform>.</editform>
             <editforminit></editforminit>
-            <annotationform></annotationform>
+            <annotationform>.</annotationform>
             <editorlayout>generatedlayout</editorlayout>
             <excludeAttributesWMS/>
             <excludeAttributesWFS/>
             <attributeactions/>
         </maplayer>
-        <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" minLabelScale="0" maxLabelScale="1e+08" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" scaleBasedLabelVisibilityFlag="0">
+        <maplayer minimumScale="0" maximumScale="1e+08" minLabelScale="0" maxLabelScale="1e+08" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" scaleBasedLabelVisibilityFlag="0">
             <id>station_popularities_copy20131126223002892</id>
             <datasource>file:../data/station-popularities.csv?type=csv&amp;xField=x_1&amp;yField=y&amp;spatialIndex=no&amp;subsetIndex=no&amp;watchFile=no</datasource>
             <title></title>
@@ -1473,7 +1435,7 @@
             <keywordList>
                 <value></value>
             </keywordList>
-            <layername>Moran Outliers</layername>
+            <layername>Moran Influential Points</layername>
             <srs>
                 <spatialrefsys>
                     <proj4>+proj=utm +zone=18 +ellps=WGS84 +datum=WGS84 +units=m +no_defs</proj4>
@@ -1491,10 +1453,8 @@
             <vectorjoins/>
             <renderer-v2 symbollevels="0" type="RuleRenderer">
                 <rules>
-                    <rule filter="terminal IN (31234, 31262, 31267, 31201, 31623, 31200, 31258)" symbol="0" label="+, +"/>
-                    <rule filter="terminal = 31007" symbol="1" label="+, -"/>
-                    <rule filter="terminal IN (31112, 31211)" symbol="2" label="-, +"/>
-                    <rule filter="terminal IN (31060, 31705, 31800, 31709, 31702, 31704, 31061)" symbol="3" label="-, -"/>
+                    <rule filter="terminal IN (31800, 31705, 31709, 31060, 31007, 31258, 31623, 31200, 31201)" symbol="0" label="More popular than nearby stations"/>
+                    <rule filter="terminal IN (31112, 31211, 31234, 31262, 31267, 31061, 31704, 31702)" symbol="1" label="Less popular than nearby stations"/>
                 </rules>
                 <symbols>
                     <symbol alpha="1" type="marker" name="0">
@@ -1513,36 +1473,6 @@
                         </layer>
                     </symbol>
                     <symbol alpha="1" type="marker" name="1">
-                        <layer pass="0" class="SimpleMarker" locked="0">
-                            <prop k="angle" v="0"/>
-                            <prop k="color" v="166,219,160,255"/>
-                            <prop k="color_border" v="166,219,160,255"/>
-                            <prop k="name" v="circle"/>
-                            <prop k="offset" v="0,0"/>
-                            <prop k="offset_unit" v="MM"/>
-                            <prop k="outline_width" v="0"/>
-                            <prop k="outline_width_unit" v="MM"/>
-                            <prop k="scale_method" v="area"/>
-                            <prop k="size" v="4"/>
-                            <prop k="size_unit" v="MM"/>
-                        </layer>
-                    </symbol>
-                    <symbol alpha="1" type="marker" name="2">
-                        <layer pass="0" class="SimpleMarker" locked="0">
-                            <prop k="angle" v="0"/>
-                            <prop k="color" v="194,165,207,255"/>
-                            <prop k="color_border" v="194,165,207,255"/>
-                            <prop k="name" v="circle"/>
-                            <prop k="offset" v="0,0"/>
-                            <prop k="offset_unit" v="MM"/>
-                            <prop k="outline_width" v="0"/>
-                            <prop k="outline_width_unit" v="MM"/>
-                            <prop k="scale_method" v="area"/>
-                            <prop k="size" v="4"/>
-                            <prop k="size_unit" v="MM"/>
-                        </layer>
-                    </symbol>
-                    <symbol alpha="1" type="marker" name="3">
                         <layer pass="0" class="SimpleMarker" locked="0">
                             <prop k="angle" v="0"/>
                             <prop k="color" v="123,50,148,255"/>
