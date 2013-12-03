@@ -250,9 +250,8 @@ near each other tend to have similar popularities. Upon examining the
 Moran plot (fig. \ref{fig:moran}), we see clearly the positive
 trend. We also see that the influential points (marked
 \rlap{\tiny{+}}{$\diamond$}) are fairly evenly distributed about the
-scatter. These influential points are somewhat spatially dispersed,
-but do appear to be somewhat clustered (see the highlighted points in
-fig. \ref{fig:map}).\marginpar{talk about locations}
+scatter. These influential points are somewhat spatially dispersed as
+well (see fig. \ref{fig:map}).
 
 \begin{figure}[t]
   \includegraphics[width=\textwidth]{moran_plot.pdf}
@@ -281,13 +280,35 @@ popular because people prefer to use the one in front of the station
 when bikes or docks are available. This project did not attempt to
 differentiate between first- and second-order effects.
 
+In general, the locations of the influential points are not
+surprising. For example, station 31258, one of the stations that is
+much more popular than those around it, is located at the Lincoln
+Memorial, a popular destination for tourists. It is also a neighbor to
+the not-particularly-popular station 31211, despite being separated
+from it by freeways; this artificially pulls down the local average and
+makes station 31258 more influential. This is a downside of using pure
+Euclidean planar geometry to define the neighbor matrix. Station 31211
+is itself another good example; it is much less popular than its
+neighbors. Some of this is due to the aforementioned connection with
+the station at the Lincoln Memorial. This station is also located at
+the Kennedy Center, a performing-arts center which is on the Potomac
+and separated from much of Washington by Interstate 66. It is not
+particularly accessible by bicycle; this is likely the reason it is
+not particularly popular. Finally, the aforementioned inhibition
+effect of stations very close to each other may be occurring near
+DuPont Circle. Station 31200 is located directly on DuPont Circle,
+while station 31234 is located about a block away and around a
+corner. People, especially tourists, traveling to DuPont Circle likely
+ride to the more obvious station; this may inhibit use of the less
+obvious station.
+
 \begin{figure}[t]
   \includegraphics[width=\textwidth]{popularities.pdf}
   \caption{\label{fig:map} Map of station popularities and Moran
     influential points.}
 \end{figure}
 
-\subsection{General Discussion and Further Research}
+\section{General Discussion and Further Research}
 
 This project found that both time and space exert significant effects
 on bikeshare use. The distributions of trips between stations differ
@@ -300,8 +321,12 @@ could attempt to determine the direction of movement of the bikes at
 different times of day, and the determinants of the movement (for
 instance, are people from Metro stations to downtown areas to downtown
 areas in the morning due to the commute?). This research would be useful
-in that it could inform rebalancing.\marginpar{Talk about DSSG/Velez
-  et al}
+in that it could inform rebalancing. One team has developed
+statistical models for predicting bikeshare station use, but their
+approach does not model the flow of bikes between stations because
+they did not have full trip data available in Chicago
+\autocite{Dempsey2013}. Using origin-destination matrices would be an
+alternate way to model bikeshare use.
 
 Another avenue for further research would be to theorize what drives
 station popularity. It seems likely that the accessibility of the
@@ -310,7 +335,7 @@ housing or transit stops are likely to be more popular. Additionally,
 stations more accessible to other stations may be more popular; the
 more stations one can reach by bike from a given location, the more
 options one has for potential trips. This could be investigated using
-a regression with station popularity as the dependent variable and the
+a regression with station popularity as the dependent vuariable and the
 various forms of accessibility as independent variables. If the model
 proved to be transferable, it would be valuable to planners
 implementing new bikeshare systems.
@@ -326,7 +351,7 @@ planners.
 \clearpage\newpage
 \printbibliography
 
-\vspace{5em}
+\vspace{25em}
 
 \emph{Copyright © 2013 Matthew Wigginton Conway. CC BY-NC 3.0.}
 
@@ -414,7 +439,7 @@ observed trip distribution.
 
 \lstinputlisting{../analysis/relabel.R}
 
-\subsection{Effects of Space}
+\subsection{Effects of Space on Bikeshare Use}
 \subsubsection{morans\_i.R}
 \label{morans_i.R}
 
