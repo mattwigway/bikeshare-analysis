@@ -55,7 +55,7 @@ origin and destination of the trip, the start and end times, and
 ancillary information.  The script \reflst{fetchData.sh} was used to
 download the CSV files. The files were then merged using
 \reflst{csvMerge.py}. This script also cleaned the data; the column
-names in the CSV files from different quarter differ slightly, so the script
+names in the CSV files from different quarters differ slightly, so the script
 contains code to normalize them.  It also renames the columns to
 remove whitespace, making it simpler to use the data in R.
 
@@ -63,15 +63,20 @@ There are no spatial data present in the trip history files. To remedy
 this, station locations were retrieved from the CaBi real-time
 API\footnote{\url{http://capitalbikeshare.com/data/stations/bikeStations.xml}}
 and merged with the trip history data using
-\reflst{expandFileWithXY.py}.
+\reflst{expandFileWithXY.py}. This script also projects the station
+locations to Universal Transverse Mercator so that Euclidean math can
+be used.
 
 Finally, \reflst{load\string_data.R} was used to load the data into R,
 removing trips longer than 20km or 2 hours, assuming these trips to be
-errors. This script also implicitly removes the 7168 trips that are
-missing either origin or destination coordinates; these trips likely
-began or ended at stations that have been removed. Since we derive the
+errors. This script also implicitly removes trips that are missing
+either origin or destination coordinates; these trips likely began or
+ended at stations that have been removed. Since we derive the
 geographic coordinates from the real-time station information feed,
-stations that are no longer active have no coordinates.
+stations that are no longer active have no coordinates. There are 7168
+such trips; this count can be determined either by the output of
+\reflst{expandFileWithXY.py} or the dedicated script
+\reflst{findTripsNoCoords.py}.
 
 \section{Time of Day Effects}
 
@@ -126,7 +131,7 @@ that the total number of trips in each matrix are the same. That is,
 Once test statistics were computed for each pair of time periods, a
 Monte Carlo simulation was undertaken to determine whether the time
 periods differ significantly. The trips that were originally used to
-generate the origin-destination were randomly reassigned to different
+generate the origin-destination matrices were randomly reassigned to different
 time periods. The number of trips in each time period was held
 constant. Since this worked by relabeling the existing trips, the
 distribution of trips to origins and destinations was constant over
@@ -134,7 +139,10 @@ all time periods though it varied within time
 periods. Origin-destination matrices were then calculated using the
 relabeled trips, and the same pairwise comparison was done and test
 statistics computed. This process was repeated 999 times. This
-simulation was performed by \reflst{relabel.R}.
+simulation was performed by \reflst{relabel.R}. If there is no
+significant difference in the origin-destination matrices between time
+periods, one would expect the test statistics from the observed data
+to fall in the middle of the distribution. 
 
 \subsection{Results}
 
@@ -175,17 +183,17 @@ morning and back to residential areas in the afternoon, providing a
 sufficient number of bikes would ameliorate the need for rebalancing.
 There may, however, be a general trend as well. For instance, people
 may prefer to bikeshare to work if they are in a hurry and bikeshare
-is faster than transit\footnote{Using this same trip history data, it
+is faster than transit,\footnote{Using this same trip history data, it
   was found that many trips in the data are faster than comparable
   bikeshare trips; people tend to use bikeshare for trips where it is
-  faster than transit \autocite{Wong2012}.}, and take transit
+  faster than transit \autocite{Wong2012}.} and take transit
 home if they are tired. In this case, there could be a general trend
 of bikes moving towards commercial areas. This could be tested using
 the trip history data, but is beyond the scope of this project.
 
 \section{Effects of Space on Bikeshare Use}
 
-Some bike share stations are, of course, more popular than others. It
+Some bikeshare stations are, of course, more popular than others. It
 was hypothesized that station popularities (defined here as the
 average number of bike movements---both pickups and dropoffs---per
 day) are spatially autocorrelated. That is, stations near each other
@@ -210,7 +218,7 @@ $\lambda = 0.33$. This did serve to make the distribution more
 symmetric (see fig. \ref{fig:boxcox} for a comparison between the
 untransformed and transformed distribution). The transformed
 distribution, however, is bimodal. This should not affect the Moran's
-$I$ calculation, however, but explanation of this would be a
+$I$ calculation, but explanation of this would be a
 worthwhile direction for future research.
 
 \begin{figure}[t]
@@ -413,10 +421,18 @@ data files from different time periods.
 Station locations are not included in the trip history feed, only
 their names and numbers. This script takes a trip history file and
 adds spatial coordinates of the stations, based on the locations of
-stations in the CaBi XML API. It also projects the location to UTM so that
-Euclidean geometry can be used in calculations.
+stations in the CaBi XML API. It also projects the location to
+Universal Transverse Mercator so that Euclidean geometry can be used
+in calculations.
 
 \lstinputlisting[language=Python]{../datamgmt/expandFileWithXY.py}
+
+\subsubsection{findTripsNoCoords.py}
+\label{findTripsNoCoords.py}
+
+This script simply counts the number of trips with no coordinates.
+
+\lstinputlisting[language=Python]{../datamgmt/findTripsNoCoords.py}
 
 \subsection{Effects of Time on Bikeshare Use}
 

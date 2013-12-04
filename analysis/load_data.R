@@ -27,6 +27,9 @@ load_data <- function(sample=F) {
   data_subset <- subset(data_raw, data_raw["duration_sec"] <= 7200)
   
   # and 20 km or less
+  # This also implicitly removes trips that are missing start and/or end
+  # coordinates; the sqrt function will return NA and the subset function
+  # will exclude that record.
   data_subset <- subset(data_subset, sqrt((data_subset["start_x"] - data_subset["end_x"])^2
                                           + (data_subset["start_y"] - data_subset["end_y"])^2)
                         <= 20000)
