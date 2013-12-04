@@ -63,12 +63,15 @@ There are no spatial data present in the trip history files. To remedy
 this, station locations were retrieved from the CaBi real-time
 API\footnote{\url{http://capitalbikeshare.com/data/stations/bikeStations.xml}}
 and merged with the trip history data using
-\reflst{expandFileWithXY.py}.\marginpar{discuss stations with no geo
-  coordinates}
+\reflst{expandFileWithXY.py}.
 
 Finally, \reflst{load\string_data.R} was used to load the data into R,
-removing trips longer than 20km or 2 hours, assuming these trips to
-be errors.
+removing trips longer than 20km or 2 hours, assuming these trips to be
+errors. This script also implicitly removes the 7168 trips that are
+missing either origin or destination coordinates; these trips likely
+began or ended at stations that have been removed. Since we derive the
+geographic coordinates from the real-time station information feed,
+stations that are no longer active have no coordinates.
 
 \section{Time of Day Effects}
 
@@ -268,6 +271,13 @@ well (see fig. \ref{fig:map}).
 
 % Could we test for spatial distribution of Moran outliers?
 
+It should be noted that the coordinates may not be exactly right for
+all of the trips in the data. We are using the current coordinates of
+each station, drawn from the real-time station information feed. The
+stations are moved short distances from time to time
+\autocite{Wong2012}. It is believed that this does not significantly
+impact the results; the weight matrix is based on adjacency rather
+than distance.
 
 \subsection{Discussion}
 
@@ -424,7 +434,7 @@ stored as single numbers in the file to reduce the file size.
 \subsubsection{load\_data.R}
 \label{load_data.R}
 
-This code loads and filter the trip data from CaBi, dropping trips
+This code loads and filters the trip data from CaBi, dropping trips
 over 20 km or 24 hours.
 
 \lstinputlisting{../analysis/load_data.R}
