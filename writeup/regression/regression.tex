@@ -1,0 +1,35 @@
+\documentclass[11pt]{article}
+\title{Predicting the Popularity of Bicycle-Sharing Systems: An Accessibility-Based Approach}
+\author{Matthew Wigginton Conway}
+\date{\today}
+\usepackage[utf8]{inputenc}
+
+\usepackage[authordate,strict,sorting=nyt,babel=other,cmsdate=both]{biblatex-chicago}
+\bibliography{BikeShare}
+
+\begin{document}
+
+Bikesharing systems have become popular of late, being installed in
+many cities. They consist of electronic stations distributed
+at regular intervals throughout a city. Members of the system can
+check out bikes at any station and return them to any other
+station. Some stations are, of course, more popular than others. It
+would seem logical to suspect that stations near jobs or housing are
+more likely to be popular. That is, one would expect to find that
+stations with the highest accessibility to jobs and housing are the
+most popular. Station popularities are spatially autocorrelated
+\autocite[5--8]{Conway2013}. This article explores whether
+measures of accessibility can be used to explain and predict
+bikeshare popularity and explain the autocorrelation seen in
+popularities. A model of bikeshare popularity is first developed in
+Washington, DC (Capital Bikeshare), and then transferred to San
+Francisco (Bay Area Bikeshare) and Minneapolis (Nice Ride Minnesota).
+
+\section{Data Acquisition}
+
+Five variables were calculated to use as input to the model: the
+number of jobs within 60 minutes by transit of each station, the
+population within 60 minutes by transit, the population and number of
+jobs within 10 minutes by walking, and the number of bikeshare
+stations within 30 minutes by cycling. Bikeshare is often combined
+with transit in multimodal trips \autocite[29]{CABI2013}.
