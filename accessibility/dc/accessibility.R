@@ -8,6 +8,7 @@ library(boot)
 library(leaps)
 library(spatstat)
 library(spdep)
+library(AID)
 
 BREAK_LINKS_OVER <- 4000
 
@@ -61,20 +62,71 @@ pairs(data[,c('popularity', 'jobs60', 'jobs10', 'population60', 'population10', 
 
 # boxplots
 layout(matrix(1:6, 2, 3, byrow=T))
-boxplot(popularity, xlab='Popularity', cex.lab=1.85)
-boxplot(jobs60, xlab='Jobs within 60 minutes by transit\n(tens of thousands)', cex.lab=1.85)
-boxplot(population60, xlab='Population within 60 minutes by transit\n(tens of thousands)', cex.lab=1.85)
-boxplot(bike30, xlab='Bikeshare stations within\n30 minutes by bike', cex.lab=1.85)
-boxplot(jobs10, xlab='Jobs within 10 minutes by walking\n(tens of thousands)', cex.lab=1.85)
-boxplot(population10, xlab='Population within 10 minutes by walking\n(tens of thousands)', cex.lab=1.85)
+hist(popularity, main='Popularity', xlab='')
+hist(jobs60, main='Jobs within\n60 minutes by transit\n(tens of thousands)', xlab='')
+hist(population60, main='Population within\n60 minutes by transit\n(tens of thousands)', xlab='')
+hist(bike30, main='Bikeshare stations within\n30 minutes by bike', xlab='')
+hist(jobs10, main='Jobs within\n10 minutes by walking\n(tens of thousands)', xlab='')
+hist(population10, main='Population within\n10 minutes by walking\n(tens of thousands)', xlab='')
+
+# calculate box-cox coefs
+bctransform <- function (data, lambda) {
+  if (lambda == 0) {
+    return(log(data))
+  }
+  else {
+    return((data^lambda - 1)/lambda)
+  }
+}
+
+calcBcCoefs <- function (data) {
+  coefs <- list()
+  for (name in names(data)) {
+    coefs[[name]] <- boxcoxnc(data[,name][data[,name] != 0], method='sw', lam=seq(-2, 4, 0.01))$result
+  }
+  
+  return(coefs)
+}
+
+bccoefs <- calcBcCoefs(data[,c('popularity', 'jobs60', 'jobs10', 'population60', 'population10', 'bike30')])
+for (name in names(bccoefs)) {
+  data[,paste(name, 'bc', sep='')] <- bctransform(data[,name], bccoefs[[name]][1])
+}
+
+# Calculate some log plots
+data$lpopularity <- log(data$popularity)
+data$lpopulation10 <- log(data$population10)
+data$ljobs10 <- log(data$jobs10)
+data$ljobs60 <- log(data$jobs60)
+
+attach(data)
+
+# transformed plots
+layout(matrix(1:3, 1, 3, byrow=T))
+hist(lpopularity, main='log(Popularity)', xlab='')
+hist(ljobs10, main='log(Jobs) within\n10 minutes by walking\n(tens of thousands)', xlab='')
+hist(lpopulation10, main='log(Population) within\n10 minutes by walking\n(tens of thousands)', xlab='')
+
+
+
+layout(matrix(1:6, 2, 3, byrow=T))
+hist(popularity, xlab='Popularity', cex.lab=1.85)
+hist(jobs60, xlab='Jobs within 60 minutes by transit\n(tens of thousands)', cex.lab=1.85)
+hist(population60, xlab='Population within 60 minutes by transit\n(tens of thousands)', cex.lab=1.85)
+hist(bike30, xlab='Bikeshare stations within\n30 minutes by bike', cex.lab=1.85)
+hist(jobs10, xlab='Jobs within 10 minutes by walking\n(tens of thousands)', cex.lab=1.85)
+hist(population10, xlab='Population within 10 minutes by walking\n(tens of thousands)', cex.lab=1.85)
+
 
 # Fit the model
 # TODO: Best subset selection?
 # Note: we're using glm instead of lm so we can do cross-validation later
 # with no family argument, glm fits a standard least-squares linear model
 # When we fit this model, we find that the only significant variables are jobs60 and population10
-lm.fit <- lm(popularity~jobs60+population60+jobs10+population10+bike30)
+lm.fit <- lm(lpopularity~jobs60+jobs10+population10)
+lm.fit <- lm(popularitybc~jobs60+jobs10+population60+population10)
 summary(lm.fit)
+plot(lm.fit)
 
 # Best subset selection with cross-validation
 # See page 250, James, Gareth, Daniela Witten, Trevor Hastie, and Robert Tibshirani.
@@ -102,7 +154,7 @@ folds <- folds[order(runif(nrow(data)))]
 # Thus each column represents a number of variables, and each row represents a fold
 cv.errors <- matrix(NA,k,5)
 for (fold in 1:k) {
-  fit <- regsubsets(popularity~jobs60+population60+jobs10+population10+bike30, data[folds != fold,])
+  fit <- regsubsets(popularitybc~jobs60+population60+jobs10+population10+bike30, data[folds != fold,])
   for (nvar in 1:5) {
     pred <- predict(fit, data[folds==fold,], id=nvar)
     cv.errors[fold,nvar] <- mean((data$popularity[folds==fold] - pred)^2)
@@ -125,11 +177,13 @@ axis(4, labels=T)
 mtext(expression(paste('Adjusted ', R^2)), 4, line=4)
 legend('bottomleft', lty=c(1,2,0), pch=c(NA,NA,8), inset=0.005, cex=0.75, text.width=2,
        legend=c('Cross-validation MSE', expression(paste('Adjusted ', R^2)),
-                'All variables statistically significant (p < 0.5)'))
+                'All variables statistically significant (p < 0.05)'))
 
 lm.fit <- lm(popularity~jobs60+jobs10+population10)
+plot(lm.fit)
 
 # check for spatial autocorrelation
+#resid.spat <- data.frame(rlabel=label[population10!=0],resid=resid(lm.fit),x=X[population10 != 0],y=Y[population10!=0])
 resid.spat <- data.frame(rlabel=label,resid=resid(lm.fit),x=X,y=Y)
 
 attach(resid.spat)
@@ -156,3 +210,9 @@ plot(weights, coords=resid.spat[,c('x','y')], main="Station adjacency")
 
 # check for autocorrelation
 moran.plot(resid.spat$resid, weights)
+
+# original (transformed)
+moran.test(bcpopularity, weights)
+
+# residuals
+moran.test(resid.spat$resid, weights)
