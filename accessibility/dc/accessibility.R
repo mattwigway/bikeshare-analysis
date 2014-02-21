@@ -9,6 +9,8 @@ library(leaps)
 library(spatstat)
 library(spdep)
 library(AID)
+library(ggplot2)
+library(scales)
 
 BREAK_LINKS_OVER <- 4000
 
@@ -45,46 +47,67 @@ data <- merge(data, bike30d[,c('label','bike30')], by='label')
 data$jobs60 <- data$jobs60 - data$jobs10
 data$population60 <- data$population60 - data$population10
 
+# We take a log to normalize the data and reduce heteroscedasticity
+# We could use a box-cox transformation, but that makes the method much more flexible
+# We don't want to be too flexible as we're trying to transfer the model
+data$lpopularity <- log(data$popularity)
+
 attach(data)
 
 # calculate some descriptive statistics
-cor(data[,c('popularity', 'jobs60', 'jobs10', 'population60', 'population10', 'bike30')])
+corplot <- function(data) {
+  # We save two copies because we'll be monkeying with the cors matrix to make the colors
+  # right
+  cors <- ret <- cor(data)
+  
+  # Principal diagonal: show white so text is visible
+  diag(cors) <- 0
+  
+  label <- matrix(as.character(round(cors, 2)), nrow(cors), ncol(cors))
+  diag(label) <- names(data)
+  
+  df <- data.frame(x=rep(1:ncol(cors), nrow(cors)), y=-sort(rep(1:nrow(cors), ncol(cors))),
+                   r=as.vector(cors), label=as.vector(label))
+  
+  p <- ggplot(df)
+  #p + geom_text(x=1:ncol(cors), y=-(1:nrow(cors)), labels=names(data))
+  benchplot(p + scale_fill_gradient2(lim=c(-1, 1), low=muted('orange'), high=muted('blue')) +
+              geom_raster(mapping=aes(x, y, fill=r)) +
+              geom_text(mapping=aes(x, y, label=label)) +
+              theme(axis.title=element_blank(), axis.text=element_blank(),
+                    axis.line=element_blank(), axis.ticks=element_blank(),
+                    panel.border=element_blank())
+              )
+  
+  return(cors)
+}
+
+cors <- corplot(data[,c('lpopularity', 'jobs60', 'jobs10', 'population60', 'population10', 'bike30')])
 
 # make some pretty pictures
 # scatterplot matrix
-pairs(data[,c('popularity', 'jobs60', 'jobs10', 'population60', 'population10', 'bike30')],
-      labels=c('Popularity', 'Jobs within\n60 minutes\nby transit\n(tens of thousands)',
+pairs(data[,c('lpopularity', 'jobs60', 'jobs10', 'population60', 'population10', 'bike30')],
+      labels=c('log(Popularity)', 'Jobs within\n60 minutes\nby transit\n(tens of thousands)',
               'Jobs within\n10 minutes\nby walking\n(tens of thousands)',
               'Population within\n60 minutes\nby transit\n(tens of thousands)',
               'Population within\n10 minutes\nby walking\n(tens of thousands)',
               'Bike stations within\n30 minutes\nby bike'),
       cex.labels=1.85)
 
-# boxplots
+# histograms
 layout(matrix(1:6, 2, 3, byrow=T))
-hist(popularity, main='Popularity', xlab='')
+hist(lpopularity, main='log(Popularity)', xlab='')
 hist(jobs60, main='Jobs within\n60 minutes by transit\n(tens of thousands)', xlab='')
 hist(population60, main='Population within\n60 minutes by transit\n(tens of thousands)', xlab='')
 hist(bike30, main='Bikeshare stations within\n30 minutes by bike', xlab='')
 hist(jobs10, main='Jobs within\n10 minutes by walking\n(tens of thousands)', xlab='')
 hist(population10, main='Population within\n10 minutes by walking\n(tens of thousands)', xlab='')
 
-attach(data)
-
-bctransform <- function (data, lambda) {
-  if (lambda == 0) {
-    return(log(data))
-  }
-  else {
-    return((data^lambda - 1)/lambda)
-  }
-}
-
 # Best subset selection with cross-validation
-# See page 250, James, Gareth, Daniela Witten, Trevor Hastie, and Robert Tibshirani.
+# See page 250, Gareth James, Daniela Witten, Trevor Hastie, and Robert Tibshirani.
 # An Introduction to Statistical Learning, with Applications in R. New York: Springer, 2013.
 
-# predict.regsubsets formula from James et al. 2013, 249.
+# predict.regsubsets function from James et al. 2013, 249.
 predict.regsubsets <- function(object, newdata, id, ...) {
   form <- as.formula(object$call[[2]])
   mat <- model.matrix(form, newdata)
@@ -102,53 +125,46 @@ folds <- rep(1:k, ceiling(nrow(data)/k))[1:nrow(data)]
 # Then randomize which obs. is in which fold
 folds <- folds[order(runif(nrow(data)))]
 
-data$lpop <- log(popularity)
-
 # Store errors in a k x 5 matrix (five for max number of variables)
 # Thus each column represents a number of variables, and each row represents a fold
-graphics.off()
 cv.errors <- matrix(NA,k,5)
 for (fold in 1:k) {
-  # fit a box-cox transformation to the data
-  subpop <- subset(popularity, folds != fold)
-  bclam <- boxcoxnc(subpop, method='sw')
-  # ugly to modify the data frame on each iteration, but it works
-  data$bcpop <- bctransform(popularity, bclam$result[1])
-  cat('Box-Cox lambda:', bclam$result[1], '\n')
-  cat('Box-Cox p-values:', bclam$result[2:4,], '\n')
-  
-  fit <- regsubsets(lpop~jobs60+population60+jobs10+population10+bike30, data[folds != fold,])
+  fit <- regsubsets(lpopularity~jobs60+population60+jobs10+population10+bike30, data[folds != fold,])
   for (nvar in 1:5) {
     pred <- predict(fit, data[folds==fold,], id=nvar)
-    cv.errors[fold,nvar] <- mean((data$lpop[folds==fold] - pred)^2)
+    cv.errors[fold,nvar] <- mean((data$lpopularity[folds==fold] - pred)^2)
   }
 }
 
 cv.errors.mean <- apply(cv.errors,2,mean)
+cv.errors.se <- apply(cv.errors,2,sd)
 
-# Now, perform Box-Cox and BSS on full dataset
-bclam <- boxcoxnc(popularity, method='sw')
-data$bcpop <- bctransform(popularity, bclam$result[1])
-cat('Box-Cox lambda:', bclam$result[1], '\n')
-cat('Box-Cox p-values:', bclam$result[2:4,], '\n')
 
-fit <- regsubsets(lpop~jobs60+population60+jobs10+population10+bike30, data)
+# Now perform best-subset selection on the full dataset
+fit <- regsubsets(lpopularity~jobs60+population60+jobs10+population10+bike30, data)
 fit.summ <- summary(fit)
 
 # Plot adjusted R^2 and CV MSE
 graphics.off()
 par(mar=c(5,4,4,5) + 0.1)
-plot(1:5,cv.errors.mean, type='b', ylab='Cross-validation MSE', xlab='Number of variables', lty=1, pch=c(8,8,8,1,1))
+ylim <- c(min(cv.errors.mean - cv.errors.se), max(cv.errors.mean + cv.errors.se))
+# 1 SE band
+plot(1:5,cv.errors.mean, ylab='Cross-validation MSE', xlab='Number of variables', ylim=ylim, pch=NA)
+polygon(c(1:5, 5:1), c(cv.errors.mean + cv.errors.se, rev(cv.errors.mean - cv.errors.se)),
+        border=NA, col='gray80', ylim=ylim)
+# awkward
+lines(1:5,cv.errors.mean, type='b',pch=c(8,8,8,1,1), lty=1)
+
 par(new=T)
 plot(1:5,fit.summ$adjr2, type='b', axes=F, ylab='', xlab='', lty=2, pch=c(8,8,8,1,1))
 axis(4, labels=T)
 mtext(expression(paste('Adjusted ', R^2)), 4, line=4)
-legend('bottomleft', lty=c(1,2,0), pch=c(NA,NA,8), inset=0.005, cex=0.75, text.width=2,
-       legend=c('Cross-validation MSE', expression(paste('Adjusted ', R^2)),
+legend('bottomright', lty=c(1,2,0), pch=c(NA,NA,8), inset=0.005, cex=0.75, text.width=2,
+       legend=c('Cross-validation MSE (shaded area 1 SD)', expression(paste('Adjusted ', R^2)),
                 'All variables statistically significant (p < 0.05)'))
-attach(data)
-lpop <- log(popularity)
-lm.fit <- lm(bcpop~jobs60)
+
+# Best fit has only 1 variable
+lm.fit <- lm(lpopularity~jobs60)
 summary(lm.fit)
 plot(lm.fit, which=1)
 
@@ -182,14 +198,37 @@ plot(weights, coords=resid.spat[,c('x','y')], main="Station adjacency")
 moran.plot(resid.spat$resid, weights)
 
 # original (transformed)
-moran.test(lpop, weights)
+moran.test(lpopularity, weights)
 
 # residuals
 moran.test(resid.spat$resid, weights)
 
 # Test actual model residuals, not transformed residuals
-lambda <- bclam$result[1]
-yhat <- (lambda * lm.fit$fit + 1)^(1/lambda)
+yhat <- exp(lm.fit$fitted)
 residpop <- popularity - yhat
 
 moran.test(residpop, weights)
+
+# Plot the model in untransformed space
+plot(popularity~jobs60)
+simjobs <- seq(0, 60, 0.5)
+lines(simjobs, exp(lm.fit$coef[1] + lm.fit$coef[2] * simjobs))
+
+# show why we took a log
+# vertical for paper
+layout(matrix(1:6, 3, 2))
+hist(popularity, main='Station popularity')
+untransformed.fit <- lm(popularity~jobs60)
+plot(untransformed.fit, which=1:2)
+
+hist(lpopularity, main='log(Popularity)')
+plot(lm.fit, which=1:2)
+
+# horizontal for presentation
+layout(matrix(1:6, 2, 3, byrow=T))
+hist(popularity, main='Station Popularity')
+untransformed.fit <- lm(popularity~jobs60)
+plot(untransformed.fit, which=1:2)
+
+hist(lpopularity, main='log(Popularity)')
+plot(lm.fit, which=1:2)
