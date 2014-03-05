@@ -143,6 +143,12 @@ for infile in argv[1:-1]:
             
                 station.addTime(status['executionTime'])
 
+                # we do this each time because some of the stations move and we want to use the most up-to-date coordinates
+                # in particular, the coordinates for the San Mateo Gov't Center were originally the same as those for the
+                # Redwood City Library. This corrects for that.
+                station.setCoords(stJson['latitude'], stJson['longitude'])
+
+
         priorIndex = index
         index = None
 
