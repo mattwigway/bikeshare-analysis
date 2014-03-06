@@ -147,23 +147,15 @@ folds <- rep(1:k, ceiling(nrow(data)/k))[1:nrow(data)]
 # Then randomize which obs. is in which fold
 folds <- folds[order(runif(nrow(data)))]
 
-setwd('../mn')
-mndata <- load_data()
-
 # Store errors in a k x nvar matrix
 # Thus each column represents a number of variables, and each row represents a fold
 nvars <- 7
 cv.errors <- matrix(NA,k,nvars)
-cv.errors.mn <- matrix(NA,k,nvars)
-cv.rf.errors <- matrix(NA,k,nvars)
-cv.rf.errors.mn <- matrix(NA,k,nvars)
 for (fold in 1:k) {
-  bss.fit <- regsubsets(popularity~jobs60+jobs30+jobs10+population60+population30+population10+bike30, data[folds != fold,])
+  bss.fit <- regsubsets(lpopularity~jobs60+jobs30+jobs10+population60+population30+population10+bike30, data[folds != fold,])
   for (nvar in 1:nvars) {
     pred <- predict(bss.fit, data[folds==fold,], id=nvar)
     cv.errors[fold,nvar] <- mean((data$lpopularity[folds==fold] - pred)^2)
-    pred <- predict(bss.fit, mndata, id=nvar)
-    cv.errors.mn[fold,nvar] <- mean((mndata$lpopularity - pred)^2)
   }
 }
 
@@ -182,9 +174,6 @@ for (fold in 1:k) {
 
 cv.errors.mean <- apply(cv.errors,2,mean)
 cv.errors.se <- apply(cv.errors,2,sd)
-cv.errors.mn.mean <- apply(cv.errors.mn,2,mean)
-cv.errors.mn.se <- apply(cv.errors.mn,2,sd)
-
 rf.errors.mean <- apply(rf.errors,2,mean)
 rf.errors.se <- apply(rf.errors,2,sd)
 
@@ -198,10 +187,13 @@ plot(1:nvars,cv.errors.mean, ylab='Cross-validation MSE', xlab='Number of variab
 lines(1:nvars,cv.errors.mean + cv.errors.se,type='l',col='gray70')
 lines(1:nvars,cv.errors.mean - cv.errors.se,type='l',col='gray70')
 
+ylim <- c(min(rf.errors.mean-rf.errors.se),
+          max(rf.errors.mean + rf.errors.se))
 # Random forests with varying m
-lines(1:nvars, rf.errors.mean, type='b', lty=2)
-lines(1:nvars,rf.errors.mean + rf.errors.se,type='l',col='gray70', lty=2)
-lines(1:nvars,rf.errors.mean - rf.errors.se,type='l',col='gray70', lty=2)
+plot(1:nvars, rf.errors.mean, ylab='Cross-validation MSE', xlab='Number of variables',
+     ylim=ylim,type='b',lty=1)
+lines(1:nvars,rf.errors.mean + rf.errors.se,type='l',col='gray70')
+lines(1:nvars,rf.errors.mean - rf.errors.se,type='l',col='gray70')
 
 # Show why taking logs is needed for regression
 log.fit <- lm(lpopularity~jobs60,data)
@@ -232,12 +224,13 @@ lm.fit <- lm(lpopularity~jobs60, data)
 summary(lm.fit)
 plot(lm.fit, which=1)
 
-# Random forest fit: m's all equivalent, we'll use three (~= sqrt(8))
+# Random forest fit: m's all equivalent, we'll use 2 (~= 7/3)
 rf.fit <- randomForest(
   lpopularity~jobs60+jobs30+jobs10+population60+population30+population10+bike30,
   data,
-  mtry=3)
+  mtry=2)
 summary(rf.fit)
+# Check for convergence
 plot(rf.fit$rsq)
 
 # check for spatial autocorrelation
@@ -247,21 +240,26 @@ resid.spat <- data.frame(rlabel=label,residlm=resid(lm.fit),residrf=lpopularity-
 attach(resid.spat)
 
 # build the neighbor matrix
-nbmat <- tri2nb(resid.spat[,c('x','y')], row.names=rlabel)
+getWeights <- function (x, y, labels) {
+  nbmat <- tri2nb(data.frame(x=x, y=y), row.names=labels)
 
-# Drop really long links
-for (i in 1:length(nbmat)) {
-  newNb <- c()
-  for (j in nbmat[[i]]) {
-    dist <- sqrt((x[i] - x[j])^2 + (y[i] - y[j])^2)
-    if (dist <= BREAK_LINKS_OVER) {
-      newNb <- c(newNb, as.integer(j))
+  # Drop really long links
+  for (i in 1:length(nbmat)) {
+    newNb <- c()
+    for (j in nbmat[[i]]) {
+      dist <- sqrt((x[i] - x[j])^2 + (y[i] - y[j])^2)
+      if (dist <= BREAK_LINKS_OVER) {
+        newNb <- c(newNb, as.integer(j))
+      }
     }
+    nbmat[[i]] <- newNb
   }
-  nbmat[[i]] <- newNb
+  
+  weights <- nb2listw(nbmat, style='W')
+  return(weights)
 }
 
-weights <- nb2listw(nbmat, style='W')
+weights <- getWeights(x, y, rlabel)
 
 # Plot the triangulation
 plot(weights, coords=resid.spat[,c('x','y')], main="Station adjacency")
@@ -276,75 +274,142 @@ moran.test(lpopularity, weights)
 moran.test(residlm, weights)
 moran.test(residrf, weights)
 
-# Test actual model residuals, not transformed residuals
-yhat <- exp(lm.fit$fitted)
-residpop <- popularity - yhat
-
-moran.test(residpop, weights)
-
-# Plot the model in untransformed space
-plot(popularity~jobs60)
-simjobs <- data.frame(jobs60=log(seq(0, 60, 0.5)))
-lines(simjobs$jobs60, predict(lm.fit, simjobs))
-
-# show why we took a log
-# vertical for paper
-layout(matrix(1:6, 3, 2))
-hist(popularity, main='Station popularity')
-untransformed.fit <- lm(popularity~jobs60)
-plot(untransformed.fit, which=1:2)
-
-hist(lpopularity, main='log(Popularity)')
-plot(lm.fit, which=1:2)
-
-# horizontal for presentation
-layout(matrix(1:6, 2, 3, byrow=T))
-hist(popularity, main='Station Popularity')
-untransformed.fit <- lm(popularity~jobs60)
-plot(untransformed.fit, which=1:2)
-
-hist(lpopularity, main='log(Popularity)')
-plot(lm.fit, which=1:2)
-
+# Transfer models
 # Minneapolis
 setwd('../mn')
 mndata <- load_data()
 
 corplot(mndata[,predictors])
 
+# weight matrix
+
 mndata$rfpreds <- predict(rf.fit, mndata)
 mndata$lmpreds <- predict(lm.fit, mndata)
 
+# Test R^2 for linear model
 tss <- sum((mndata$lpopularity - mean(mndata$lpopularity))^2)
 rss <- sum((mndata$lpopularity - mndata$lmpreds)^2)
 testr2 <- 1 - rss/tss
 testr2
 
+# Test MSE for linear model
+mean((mndata$lpopularity - mndata$lmpreds)^2)
+
+# Test MSE for random forest
+mean((mndata$lpopularity - mndata$rfpreds)^2)
+
+# Test R^2 for random forest
+tss <- sum((mndata$lpopularity - mean(mndata$lpopularity))^2)
+rss <- sum((mndata$lpopularity - mndata$rfpreds)^2)
+testr2 <- 1 - rss/tss
+testr2
+
+# New fit, same predictor
+
+# cross-validation
+cv.errors.mn <- rep(NA, k)
+# First, assign everything to folds of approximately equal size
+mnfolds <- rep(1:k, ceiling(nrow(mndata)/k))[1:nrow(mndata)]
+# Then randomize which obs. is in which fold
+mnfolds <- mnfolds[order(runif(nrow(mndata)))]
+for (fold in 1:k) {
+  cv.fit <- lm(lpopularity~jobs60,mndata[mnfolds != fold,])
+  pred <- predict(cv.fit, mndata[mnfolds==fold,])
+  cv.errors.mn[fold] <- mean((pred - mndata[mnfolds==fold,]$lpopularity)^2)
+}
+
+# CV MSE
+mean(cv.errors.mn)
+
 mn.lm.fit <- lm(lpopularity~jobs60,mndata)
 summary(mn.lm.fit)
 
 # Partial least squares-esque fit
-mn.fit <- lm(popularity~preds,mndata)
-summary(mn.fit)
+mn.rf.fit <- lm(lpopularity~rfpreds,mndata)
+summary(mn.rf.fit)
 
-# plot
-plot(lpopularity~jobs60,mndata)
-abline(lm.fit)
+# Completely new random forest
+mn.fullrf.fit <- randomForest(lpopularity~jobs60+jobs30+jobs10+population60+population30+population10+bike30,
+                              data=mndata, mtry=2)
+mn.fullrf.fit
+
+# check for autocorrelation
+mnweights <- getWeights(mndata$X, mndata$Y, mndata$terminal)
+moran.test(mndata$lpopularity, mnweights)
+# direct transfer
+moran.test(mndata$lpopularity - mndata$lmpreds, mnweights)
+# refit lm
+moran.test(resid(mn.lm.fit), mnweights)
+# pls
+moran.test(resid(mn.rf.fit), mnweights)
+# refit random forest
+moran.test(mndata$lpopularity - mn.fullrf.fit$predicted, mnweights)
 
 # San Francisco!
 setwd('../sf')
 sfdata <- load_data()
 
-
 corplot(sfdata[,predictors])
 
 # do the predictions
 sfdata$lmpreds <- predict(lm.fit, sfdata)
+sfdata$rfpreds <- predict(rf.fit, sfdata)
 
 tss <- sum((sfdata$lpopularity - mean(sfdata$lpopularity))^2)
 rss <- sum((sfdata$lpopularity - sfdata$lmpreds)^2)
 testr2 <- 1 - rss/tss
 testr2
+
+# Test MSE for linear model
+mean((sfdata$lpopularity - sfdata$lmpreds)^2)
+
+# Test MSE for random forest
+mean((sfdata$lpopularity - sfdata$rfpreds)^2)
+
+tss <- sum((sfdata$lpopularity - mean(sfdata$lpopularity))^2)
+rss <- sum((sfdata$lpopularity - sfdata$rfpreds)^2)
+testr2 <- 1 - rss/tss
+testr2
+
+# New fit, same predictor
+# cross-validation
+cv.errors.sf <- rep(NA, k)
+# First, assign everything to folds of approximately equal size
+sffolds <- rep(1:k, ceiling(nrow(sfdata)/k))[1:nrow(sfdata)]
+# Then randomize which obs. is in which fold
+sffolds <- sffolds[order(runif(nrow(sfdata)))]
+for (fold in 1:k) {
+  cv.fit <- lm(lpopularity~jobs60,sfdata[sffolds != fold,])
+  pred <- predict(cv.fit, sfdata[sffolds==fold,])
+  cv.errors.sf[fold] <- mean((pred - sfdata[sffolds==fold,]$lpopularity)^2)
+}
+
+# CV MSE
+mean(cv.errors.sf)
+
+sf.lm.fit <- lm(lpopularity~jobs60,sfdata)
+summary(sf.lm.fit)
+
+# Partial least squares-esque fit
+sf.rf.fit <- lm(lpopularity~rfpreds,sfdata)
+summary(sf.rf.fit)
+
+# Completely new random forest
+sf.fullrf.fit <- randomForest(lpopularity~jobs60+jobs30+jobs10+population60+population30+population10+bike30,
+                              data=sfdata, mtry=2)
+sf.fullrf.fit
+
+# check for autocorrelation
+sfweights <- getWeights(sfdata$X, sfdata$Y, sfdata$terminal)
+moran.test(sfdata$lpopularity, sfweights)
+# direct transfer
+moran.test(sfdata$lpopularity - sfdata$lmpreds, sfweights)
+# refit lm
+moran.test(resid(sf.lm.fit), sfweights)
+# pls
+moran.test(resid(sf.rf.fit), sfweights)
+# refit random forest
+moran.test(sfdata$lpopularity - sf.fullrf.fit$predicted, sfweights)
 
 # Plot the SF and MN linear models
 layout(matrix(1:2, 1, 2))
@@ -365,11 +430,3 @@ abline(lm.fit)
 sf.lm.fit <- lm(lpopularity~jobs60,sfdata)
 summary(sf.lm.fit)
 
-# PLS fit
-sf.fit <- lm(sfdata$popularity~preds)
-summary(sf.fit)
-
-plot(lpop~preds)
-abline(sf.fit)
-
-abline(sf.fit)
