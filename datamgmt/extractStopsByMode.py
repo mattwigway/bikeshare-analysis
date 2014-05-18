@@ -20,6 +20,8 @@ from sys import argv
 from csv import DictReader, DictWriter
 import codecs
 
+# Note that we're not including Cable Car in here as it seems to
+# qualitatively different from other rail modes in San Francisco
 modes = dict(
     bus = (3,), # Bus
     rail = (0, 1, 2) # Tram, Metro, Heavy/Commuter
@@ -86,7 +88,11 @@ for filePath in argv[1:]:
         for line in fixupBom(DictReader(gtfs.open('stop_times.txt'))):
             stopId = prefix + '_' + line['stop_id']
             routeType = tripModeMap[line['trip_id']]
-            stopsByMode[getModeForType(routeType)][stopId] = stops[stopId]
+
+            # some modes are ignored, e.g. cable car
+            mode = getModeForType(routeType)
+            if mode != None:
+                stopsByMode[mode][stopId] = stops[stopId]
 
         for mode in stopsByMode:
             theFile = outfiles[mode]
