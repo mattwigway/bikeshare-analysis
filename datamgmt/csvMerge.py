@@ -49,6 +49,8 @@ for infile in argv[1:-1]:
         renameKey(row, 'End terminal', 'End Terminal')
         renameKey(row, 'Subscriber Type', 'Subscription Type')
         renameKey(row, 'Type', 'Subscription Type')
+        renameKey(row, 'Start Date', 'Start date')
+        renameKey(row, 'End Date', 'End date')
 
         # Make field names R-friendly
         renameKey(row, 'Duration', 'duration')
@@ -74,11 +76,18 @@ for infile in argv[1:-1]:
 
         # Back out the duration
         if not row.has_key('duration_sec'):
-            m = re.search('([0-9]+)h[ .]+([0-9]+)mi?n?[ .]+([0-9]+)s', row['duration'])
-            if m == None:
-                print 'Unable to parse duration %s' % row['duration']
-            else:
-                row['duration_sec'] = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
+            # check if durations are seconds
+            try:
+                row['duration_sec'] = int(row['duration'])
+            except ValueError:
+                m = re.search('([0-9]+)h[ .]+([0-9]+)mi?n?[ .]+([0-9]+)s', row['duration'])
+                if m == None:
+                    print 'Unable to parse duration %s' % row['duration']
+                else:
+                    row['duration_sec'] = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
+                
+        # strip down the row to just what we want
+        row = dict([(k, row[k]) for k in row if k in fieldnames])
 
         out.writerow(row)
 

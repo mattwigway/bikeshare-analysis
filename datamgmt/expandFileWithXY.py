@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Add X and Y coordinates to a Capital Bikeshare trip history file
 
-# Copyright (C) 2013 Matthew Wigginton Conway.
+# Copyright (C) 2013-2014 Matthew Wigginton Conway.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,40 +18,87 @@
 import csv
 from xml.dom.minidom import parse
 from sys import argv
+import json
 from pyproj import Proj, transform
 
 sourceProj = Proj(init='epsg:4326')
 # WGS 84 UTM Zone 18N meters
-destProj = Proj(init='epsg:32618')
+#destProj = Proj(init='epsg:32618')
+
+# State Plane Minnesota South
+#destProj = Proj(init='epsg:26993')
+
+# State Plane CA Zone 3
+destProj = Proj(init='epsg:26943')
 
 # process arguments
 
 inCsvFileName = argv[1]
-xmlFileName = argv[2]
+locFileName = argv[2]
 outCsvFileName = argv[3]
 
 # Build the station database
-stationFile = parse(xmlFileName)
-
 stations = dict()
 
-# convenience
-def getTagContents(parent, tagName):
-    return station.getElementsByTagName(tagName)[0].firstChild.nodeValue 
+if locFileName[-4:] == '.xml':
+    stationFile = parse(locFileName)
 
-for station in stationFile.getElementsByTagName('station'):
-    stId = getTagContents(station, 'terminalName')
+    # convenience
+    def getTagContents(parent, tagName):
+        return station.getElementsByTagName(tagName)[0].firstChild.nodeValue 
 
-    # todo: project
-    lat = float(getTagContents(station, 'lat'))
-    lon = float(getTagContents(station, 'long'))
+    for station in stationFile.getElementsByTagName('station'):
+        stId = getTagContents(station, 'terminalName')
 
-    x, y = transform(sourceProj, destProj, lon, lat)
+        # todo: project
+        lat = float(getTagContents(station, 'lat'))
+        lon = float(getTagContents(station, 'long'))
 
-    stations[stId] = dict(
-        x=int(round(x)),
-        y=int(round(y))
-        )
+        x, y = transform(sourceProj, destProj, lon, lat)
+
+        stations[stId] = dict(
+            x=int(round(x)),
+            y=int(round(y))
+            )
+
+elif locFileName[-4:] == '.csv':
+    # niceride format station locations
+    inf = csv.DictReader(open(locFileName))
+    for line in inf:
+        stId = line['Terminal']
+        lat = float(line['Latitude'])
+        lon = float(line['Longitude'])
+    
+        x, y = transform(sourceProj, destProj, lon, lat)
+    
+        stations[stId] = dict(
+            x=int(round(x)),
+            y=int(round(y))
+            )
+
+elif locFileName[-5:] == '.json':
+    # Bay Area Bike Share format locations
+    stations = json.load(open(locFileName))
+
+    for st in stations['stationBeanList']:
+        stId = st['id']
+        lat = st['latitude']
+        lon = st['longitude']
+
+        x, y = transform(sourceProj, destProj, lon, lat)
+    
+        stations[str(stId)] = dict(
+            x=int(round(x)),
+            y=int(round(y))
+            )
+
+    # dirty hack for stations which have two ids
+    stations['53'] = stations['39']
+
+
+else:
+    print 'unrecognized file extension for spatial data'
+    exit(1)
 
 # read CSV
 inCsv = csv.DictReader(open(inCsvFileName))
